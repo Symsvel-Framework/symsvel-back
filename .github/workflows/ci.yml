@@ -32,3 +32,38 @@ jobs:
           php bin/console lint:container --env=test
           php bin/console list symsvel --env=test
       - run: composer qa
+
+  installation-smoke:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: ctype, iconv, intl, pdo_sqlite
+          coverage: none
+          tools: composer:v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Configure access to private repositories
+        env:
+          SYMSVEL_READ_TOKEN: ${{ secrets.SYMSVEL_READ_TOKEN }}
+        run: |
+          if [ -z "$SYMSVEL_READ_TOKEN" ]; then
+            echo "::error::SYMSVEL_READ_TOKEN is required."
+            exit 1
+          fi
+          echo "::add-mask::$SYMSVEL_READ_TOKEN"
+          composer config --global github-oauth.github.com "$SYMSVEL_READ_TOKEN"
+          git config --global url."https://x-access-token:${SYMSVEL_READ_TOKEN}@github.com/".insteadOf "git@github.com:"
+      - name: Install backend and latest Tooling
+        run: |
+          composer install --no-interaction --prefer-dist --no-progress
+          composer update symsvel-framework/tooling --with-dependencies --no-interaction --prefer-dist --no-progress
+      - name: Install and build all SvelteKit interfaces
+        run: |
+          printf '4\n' | php bin/console symsvel:install
+          test -f bo/package.json
+          test -f app/package.json
+          test -f front/package.json
