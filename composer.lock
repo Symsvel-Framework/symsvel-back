@@ -7292,12 +7292,12 @@
             "source": {
                 "type": "git",
                 "url": "git@github.com:Symsvel-Framework/symsvel-tooling.git",
-                "reference": "e6acd9b3289ce5159910eee650257f2e8549202e"
+                "reference": "66ce120ce8c49369f2e7a776f8a9c78526aa0e41"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Symsvel-Framework/symsvel-tooling/zipball/e6acd9b3289ce5159910eee650257f2e8549202e",
-                "reference": "e6acd9b3289ce5159910eee650257f2e8549202e",
+                "url": "https://api.github.com/repos/Symsvel-Framework/symsvel-tooling/zipball/66ce120ce8c49369f2e7a776f8a9c78526aa0e41",
+                "reference": "66ce120ce8c49369f2e7a776f8a9c78526aa0e41",
                 "shasum": ""
             },
             "require": {
@@ -7336,7 +7336,7 @@
                 "source": "https://github.com/Symsvel-Framework/symsvel-tooling/tree/main",
                 "issues": "https://github.com/Symsvel-Framework/symsvel-tooling/issues"
             },
-            "time": "2026-10-25T17:31:52+00:00"
+            "time": "2026-10-25T18:03:14+00:00"
         },
         {
             "name": "twig/extra-bundle",
