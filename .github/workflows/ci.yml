@@ -62,7 +62,6 @@ jobs:
           mkdir -p "$RUNNER_TEMP/symsvel-workspace"
           composer create-project --repository='{"type":"vcs","url":"https://github.com/Symsvel-Framework/symsvel-back.git"}' symsvel-framework/back "$RUNNER_TEMP/symsvel-workspace/backend" dev-main --no-interaction --prefer-dist --no-progress
           cd "$RUNNER_TEMP/symsvel-workspace/backend"
-          composer update symsvel-framework/tooling --with-dependencies --no-interaction --prefer-dist --no-progress
       - name: Install and build all SvelteKit interfaces
         run: |
           cd "$RUNNER_TEMP/symsvel-workspace/backend"
