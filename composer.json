@@ -84,6 +84,11 @@
         ],
         "post-update-cmd": [
             "@auto-scripts"
+        ],
+        "qa": [
+            "@composer validate --no-check-publish",
+            "@php bin/console lint:container --env=test",
+            "@php vendor/bin/phpunit"
         ]
     },
     "conflict": {
