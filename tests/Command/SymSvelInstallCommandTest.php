@@ -7,6 +7,7 @@ namespace App\Tests\Command;
 use App\Command\SymSvelInstallCommand;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Tester\CommandTester;
+use Symfony\Component\Console\Application;
 
 final class SymSvelInstallCommandTest extends TestCase
 {
@@ -15,7 +16,10 @@ final class SymSvelInstallCommandTest extends TestCase
         $projectDir = sys_get_temp_dir().'/symsvel-install-test-'.bin2hex(random_bytes(8));
         mkdir($projectDir);
         try {
-            $tester = new CommandTester(new SymSvelInstallCommand($projectDir));
+            $application = new Application();
+            $command = new SymSvelInstallCommand($projectDir);
+            $application->add($command);
+            $tester = new CommandTester($command);
             self::assertSame(2, $tester->execute([], ['interactive' => false]));
             self::assertDirectoryDoesNotExist($projectDir.'/bo');
         } finally {
