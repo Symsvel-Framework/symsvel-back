@@ -15,7 +15,5 @@ jobs:
           extensions: ctype, iconv, intl, pdo_sqlite
           coverage: none
           tools: composer:v2
-      - run: composer validate --strict
       - run: composer install --no-interaction --prefer-dist --no-progress
-      - run: php bin/console lint:container --env=test
-      - run: vendor/bin/phpunit
+      - run: composer qa
