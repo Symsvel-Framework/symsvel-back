@@ -63,7 +63,13 @@ jobs:
           composer update symsvel-framework/tooling --with-dependencies --no-interaction --prefer-dist --no-progress
       - name: Install and build all SvelteKit interfaces
         run: |
-          printf '4\n' | php bin/console symsvel:install
-          test -f bo/package.json
-          test -f app/package.json
-          test -f front/package.json
+          mkdir -p "$RUNNER_TEMP/symsvel-workspace/backend"
+          cp -a . "$RUNNER_TEMP/symsvel-workspace/backend/"
+          cd "$RUNNER_TEMP/symsvel-workspace/backend"
+          php bin/console symsvel:install --no-interaction --components=all
+          test -f ../bo/package.json
+          test -f ../app/package.json
+          test -f ../front/package.json
+          test ! -e bo/package.json
+          test ! -e app/package.json
+          test ! -e front/package.json
