@@ -49,3 +49,8 @@
 *.tmp
 *.swp
 *~
+
+# SymSvel interfaces installed as separate Git repositories
+/bo/
+/app/
+/front/
