@@ -14,7 +14,9 @@ composer config --global repositories.symsvel-back vcs https://github.com/Symsve
 
 Configurer l'authentification GitHub de Composer via `composer config --global --auth github-oauth.github.com <TOKEN>` (ne jamais committer le jeton). Le compte doit avoir accès au dépôt privé.
 
-Après publication d'un tag stable `vX.Y.Z` :
+Une release `v0.1.0` existe déjà. Elle est antérieure aux derniers changements du Tooling. Pour valider le parcours complet, il faudra publier une nouvelle version du Back **uniquement après validation explicite**, avec un `composer.lock` actualisé et une CI verte.
+
+Après publication de cette version :
 
 ```bash
 composer create-project symsvel-framework/back mon-projet
@@ -29,9 +31,17 @@ L'installateur propose :
 3. BO + Front
 4. BO + App + Front
 
-L'installation clone les interfaces privées en SSH dans `bo/`, `app/` et/ou `front/`. Configurer une clé SSH GitHub avec accès à ces dépôts. Les dossiers existants ne sont jamais écrasés. Installer ensuite les dépendances des interfaces avec `npm ci` dans chaque dossier créé.
+L'installation clone les interfaces privées en SSH dans `bo/`, `app/` et/ou `front/`. Configurer une clé SSH GitHub avec accès à ces dépôts. Les dossiers existants ne sont jamais écrasés. La version actuelle du Tooling exécute automatiquement `npm ci` puis `npm run build` pour chaque interface. Il faut donc disposer de Node.js/npm localement. Les dossiers nouvellement créés sont supprimés si l'installation échoue, sans toucher aux chemins préexistants.
 
 **Important :** `create-project` copie le socle à une version donnée. Les mises à jour du backend ne sont pas propagées automatiquement aux projets créés.
+
+## Préparation du premier crash-test
+
+Le premier test global partira d'un dossier vierge et devra confirmer : création du Back par Composer, installation des trois interfaces (choix 4), builds SvelteKit réussis, démarrage de Symfony et accès aux pages BO, App et Front dans le navigateur.
+
+**Attention :** le `composer.lock` du Back verrouille une révision précise de Tooling. Le merge de Tooling dans `main` ne met pas automatiquement à jour les projets existants ni les releases du Back. Avant publication d'une nouvelle version, actualiser ce verrouillage via Composer, exécuter `composer qa` et vérifier la CI.
+
+Les mises à jour sont exclusivement locales. Aucune commande de mise à jour ne doit s'exécuter sur un serveur de production.
 
 ## Qualité
 
