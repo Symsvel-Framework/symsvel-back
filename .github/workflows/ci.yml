@@ -57,13 +57,19 @@ jobs:
           echo "::add-mask::$SYMSVEL_READ_TOKEN"
           composer config --global github-oauth.github.com "$SYMSVEL_READ_TOKEN"
           git config --global url."https://x-access-token:${SYMSVEL_READ_TOKEN}@github.com/".insteadOf "git@github.com:"
-      - name: Install backend and latest Tooling
+      - name: Create project in backend directory
         run: |
-          composer install --no-interaction --prefer-dist --no-progress
+          mkdir -p "$RUNNER_TEMP/symsvel-workspace"
+          composer create-project --repository='{"type":"vcs","url":"https://github.com/Symsvel-Framework/symsvel-back.git"}' symsvel-framework/back "$RUNNER_TEMP/symsvel-workspace/backend" dev-main --no-interaction --prefer-dist --no-progress
+          cd "$RUNNER_TEMP/symsvel-workspace/backend"
           composer update symsvel-framework/tooling --with-dependencies --no-interaction --prefer-dist --no-progress
       - name: Install and build all SvelteKit interfaces
         run: |
-          printf '4\n' | php bin/console symsvel:install
-          test -f bo/package.json
-          test -f app/package.json
-          test -f front/package.json
+          cd "$RUNNER_TEMP/symsvel-workspace/backend"
+          php bin/console symsvel:install --no-interaction --components=all
+          test -f ../bo/package.json
+          test -f ../app/package.json
+          test -f ../front/package.json
+          test ! -e bo/package.json
+          test ! -e app/package.json
+          test ! -e front/package.json
