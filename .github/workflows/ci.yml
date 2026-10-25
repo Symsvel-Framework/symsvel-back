@@ -17,14 +17,14 @@ jobs:
           tools: composer:v2
       - name: Configure private package access
         env:
-          SYMSVEL_REPO_TOKEN: ${{ secrets.SYMSVEL_REPO_TOKEN }}
+          SYMSVEL_READ_TOKEN: ${{ secrets.SYMSVEL_READ_TOKEN }}
         run: |
-          if [ -z "$SYMSVEL_REPO_TOKEN" ]; then
-            echo "::error::Repository secret SYMSVEL_REPO_TOKEN is required to install private Core and Tooling packages."
+          if [ -z "$SYMSVEL_READ_TOKEN" ]; then
+            echo "::error::Repository secret SYMSVEL_READ_TOKEN is required to install private Core and Tooling packages."
             exit 1
           fi
-          echo "::add-mask::$SYMSVEL_REPO_TOKEN"
-          composer config --global github-oauth.github.com "$SYMSVEL_REPO_TOKEN"
+          echo "::add-mask::$SYMSVEL_READ_TOKEN"
+          composer config --global github-oauth.github.com "$SYMSVEL_READ_TOKEN"
       - name: Install locked dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
       - name: Verify bundle registration and command
