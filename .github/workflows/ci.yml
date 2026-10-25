@@ -15,5 +15,20 @@ jobs:
           extensions: ctype, iconv, intl, pdo_sqlite
           coverage: none
           tools: composer:v2
-      - run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Configure private package access
+        env:
+          SYMSVEL_REPO_TOKEN: ${{ secrets.SYMSVEL_REPO_TOKEN }}
+        run: |
+          if [ -z "$SYMSVEL_REPO_TOKEN" ]; then
+            echo "::error::Repository secret SYMSVEL_REPO_TOKEN is required to install private Core and Tooling packages."
+            exit 1
+          fi
+          echo "::add-mask::$SYMSVEL_REPO_TOKEN"
+          composer config --global github-oauth.github.com "$SYMSVEL_REPO_TOKEN"
+      - name: Install locked dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Verify bundle registration and command
+        run: |
+          php bin/console lint:container --env=test
+          php bin/console list symsvel --env=test
       - run: composer qa
