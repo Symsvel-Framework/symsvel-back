@@ -19,6 +19,16 @@ jobs:
           extensions: ctype, iconv, intl, pdo_sqlite
           coverage: none
           tools: composer:v2
+      - name: Configure private package access
+        env:
+          SYMSVEL_READ_TOKEN: ${{ secrets.SYMSVEL_READ_TOKEN }}
+        run: |
+          if [ -z "$SYMSVEL_READ_TOKEN" ]; then
+            echo "::error::Repository secret SYMSVEL_READ_TOKEN is required to install private Core and Tooling packages."
+            exit 1
+          fi
+          echo "::add-mask::$SYMSVEL_READ_TOKEN"
+          composer config --global github-oauth.github.com "$SYMSVEL_READ_TOKEN"
       - run: composer install --no-interaction --prefer-dist --no-progress
       - run: composer qa
       - name: Publish GitHub Release
