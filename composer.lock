@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "bdacd82270325b27ea458d8751569585",
+    "content-hash": "e156a4621e2d96d2975b9180380a76df",
     "packages": [
         {
             "name": "doctrine/collections",
@@ -7244,6 +7244,94 @@
             "time": "2026-10-12T12:37:13+00:00"
         },
         {
+            "name": "symsvel-framework/core",
+            "version": "dev-main",
+            "source": {
+                "type": "git",
+                "url": "git@github.com:Symsvel-Framework/symsvel-core.git",
+                "reference": "2d02d97b33f1ded988206d2ac9e4c4a7d598d807"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Symsvel-Framework/symsvel-core/zipball/2d02d97b33f1ded988206d2ac9e4c4a7d598d807",
+                "reference": "2d02d97b33f1ded988206d2ac9e4c4a7d598d807",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.4",
+                "symfony/framework-bundle": "^8.1"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^13.4"
+            },
+            "default-branch": true,
+            "type": "symfony-bundle",
+            "autoload": {
+                "psr-4": {
+                    "SymSvel\\Core\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "SymSvel\\Core\\Tests\\": "tests/"
+                }
+            },
+            "license": [
+                "proprietary"
+            ],
+            "description": "SymSvel runtime Symfony bundle",
+            "support": {
+                "source": "https://github.com/Symsvel-Framework/symsvel-core/tree/main",
+                "issues": "https://github.com/Symsvel-Framework/symsvel-core/issues"
+            },
+            "time": "2026-10-25T11:07:16+00:00"
+        },
+        {
+            "name": "symsvel-framework/tooling",
+            "version": "dev-main",
+            "source": {
+                "type": "git",
+                "url": "git@github.com:Symsvel-Framework/symsvel-tooling.git",
+                "reference": "307f6497564af135194562f89be9939222ea0ffa"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Symsvel-Framework/symsvel-tooling/zipball/307f6497564af135194562f89be9939222ea0ffa",
+                "reference": "307f6497564af135194562f89be9939222ea0ffa",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.4",
+                "symfony/console": "^8.1",
+                "symfony/framework-bundle": "^8.1",
+                "symfony/process": "^8.1"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^13.4"
+            },
+            "default-branch": true,
+            "type": "symfony-bundle",
+            "autoload": {
+                "psr-4": {
+                    "SymSvel\\Tooling\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "SymSvel\\Tooling\\Tests\\": "tests/"
+                }
+            },
+            "license": [
+                "proprietary"
+            ],
+            "description": "SymSvel development tooling Symfony bundle",
+            "support": {
+                "source": "https://github.com/Symsvel-Framework/symsvel-tooling/tree/main",
+                "issues": "https://github.com/Symsvel-Framework/symsvel-tooling/issues"
+            },
+            "time": "2026-10-25T11:14:48+00:00"
+        },
+        {
             "name": "twig/extra-bundle",
             "version": "v3.29.0",
             "source": {
@@ -9857,14 +9945,17 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {
+        "symsvel-framework/core": 20,
+        "symsvel-framework/tooling": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
-        "php": ">=8.4",
         "ext-ctype": "*",
-        "ext-iconv": "*"
+        "ext-iconv": "*",
+        "php": ">=8.4"
     },
-    "platform-dev": [],
+    "platform-dev": {},
     "plugin-api-version": "2.9.0"
 }
