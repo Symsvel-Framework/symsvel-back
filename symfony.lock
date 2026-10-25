@@ -278,6 +278,12 @@
             "config/packages/messenger.yaml"
         ]
     },
+    "symsvel-framework/core": {
+        "version": "dev-main"
+    },
+    "symsvel-framework/tooling": {
+        "version": "dev-main"
+    },
     "twig/extra-bundle": {
         "version": "v3.29.0"
     }
