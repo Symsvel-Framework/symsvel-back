@@ -7292,12 +7292,12 @@
             "source": {
                 "type": "git",
                 "url": "git@github.com:Symsvel-Framework/symsvel-tooling.git",
-                "reference": "307f6497564af135194562f89be9939222ea0ffa"
+                "reference": "e6acd9b3289ce5159910eee650257f2e8549202e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Symsvel-Framework/symsvel-tooling/zipball/307f6497564af135194562f89be9939222ea0ffa",
-                "reference": "307f6497564af135194562f89be9939222ea0ffa",
+                "url": "https://api.github.com/repos/Symsvel-Framework/symsvel-tooling/zipball/e6acd9b3289ce5159910eee650257f2e8549202e",
+                "reference": "e6acd9b3289ce5159910eee650257f2e8549202e",
                 "shasum": ""
             },
             "require": {
@@ -7321,6 +7321,13 @@
                     "SymSvel\\Tooling\\Tests\\": "tests/"
                 }
             },
+            "scripts": {
+                "qa": [
+                    "@php -l src/Installation/ComponentInstaller.php",
+                    "@php -l src/Command/SymSvelInstallCommand.php",
+                    "@php vendor/bin/phpunit"
+                ]
+            },
             "license": [
                 "proprietary"
             ],
@@ -7329,7 +7336,7 @@
                 "source": "https://github.com/Symsvel-Framework/symsvel-tooling/tree/main",
                 "issues": "https://github.com/Symsvel-Framework/symsvel-tooling/issues"
             },
-            "time": "2026-10-25T11:14:48+00:00"
+            "time": "2026-10-25T17:31:52+00:00"
         },
         {
             "name": "twig/extra-bundle",
