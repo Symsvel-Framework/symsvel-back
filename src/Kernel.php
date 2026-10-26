@@ -14,6 +14,6 @@ class Kernel extends BaseKernel
      */
     private function getAllowedEnvs(): array
     {
-        return ['prod', 'dev', 'test', 'CORE'];
+        return ['prod', 'dev', 'test', 'core'];
     }
 }
