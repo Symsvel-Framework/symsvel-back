@@ -40,8 +40,8 @@
         "symfony/validator": "8.1.*",
         "symfony/web-link": "8.1.*",
         "symfony/yaml": "8.1.*",
-        "symsvel-framework/core": "dev-main",
-        "symsvel-framework/tooling": "dev-main",
+        "symsvel-framework/core": "^1.0",
+        "symsvel-framework/tooling": "^1.0",
         "twig/extra-bundle": "^2.12|^3.29",
         "twig/twig": "^2.12|^3.30"
     },
