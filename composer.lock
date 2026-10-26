@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e156a4621e2d96d2975b9180380a76df",
+    "content-hash": "21fe20d423324d74a6eefeafc1262f2b",
     "packages": [
         {
             "name": "doctrine/collections",
@@ -7245,16 +7245,16 @@
         },
         {
             "name": "symsvel-framework/core",
-            "version": "dev-main",
+            "version": "v1.0.0",
             "source": {
                 "type": "git",
                 "url": "git@github.com:Symsvel-Framework/symsvel-core.git",
-                "reference": "2d02d97b33f1ded988206d2ac9e4c4a7d598d807"
+                "reference": "199919b6d3ff57b23e9180531c2654a8ca1b9974"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Symsvel-Framework/symsvel-core/zipball/2d02d97b33f1ded988206d2ac9e4c4a7d598d807",
-                "reference": "2d02d97b33f1ded988206d2ac9e4c4a7d598d807",
+                "url": "https://api.github.com/repos/Symsvel-Framework/symsvel-core/zipball/199919b6d3ff57b23e9180531c2654a8ca1b9974",
+                "reference": "199919b6d3ff57b23e9180531c2654a8ca1b9974",
                 "shasum": ""
             },
             "require": {
@@ -7264,7 +7264,6 @@
             "require-dev": {
                 "phpunit/phpunit": "^13.4"
             },
-            "default-branch": true,
             "type": "symfony-bundle",
             "autoload": {
                 "psr-4": {
@@ -7281,23 +7280,23 @@
             ],
             "description": "SymSvel runtime Symfony bundle",
             "support": {
-                "source": "https://github.com/Symsvel-Framework/symsvel-core/tree/main",
+                "source": "https://github.com/Symsvel-Framework/symsvel-core/tree/v1.0.0",
                 "issues": "https://github.com/Symsvel-Framework/symsvel-core/issues"
             },
-            "time": "2026-10-25T11:07:16+00:00"
+            "time": "2026-10-26T08:06:36+00:00"
         },
         {
             "name": "symsvel-framework/tooling",
-            "version": "dev-main",
+            "version": "v1.0.0",
             "source": {
                 "type": "git",
                 "url": "git@github.com:Symsvel-Framework/symsvel-tooling.git",
-                "reference": "5fdd8af53e09c1eff7cd21a950db9fa03fb8a3ee"
+                "reference": "fed03f6970955a7bd05173b6016f77eb1ebcbe47"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Symsvel-Framework/symsvel-tooling/zipball/5fdd8af53e09c1eff7cd21a950db9fa03fb8a3ee",
-                "reference": "5fdd8af53e09c1eff7cd21a950db9fa03fb8a3ee",
+                "url": "https://api.github.com/repos/Symsvel-Framework/symsvel-tooling/zipball/fed03f6970955a7bd05173b6016f77eb1ebcbe47",
+                "reference": "fed03f6970955a7bd05173b6016f77eb1ebcbe47",
                 "shasum": ""
             },
             "require": {
@@ -7309,7 +7308,6 @@
             "require-dev": {
                 "phpunit/phpunit": "^13.4"
             },
-            "default-branch": true,
             "type": "symfony-bundle",
             "autoload": {
                 "psr-4": {
@@ -7334,10 +7332,10 @@
             ],
             "description": "SymSvel development tooling Symfony bundle",
             "support": {
-                "source": "https://github.com/Symsvel-Framework/symsvel-tooling/tree/main",
+                "source": "https://github.com/Symsvel-Framework/symsvel-tooling/tree/v1.0.0",
                 "issues": "https://github.com/Symsvel-Framework/symsvel-tooling/issues"
             },
-            "time": "2026-10-26T07:15:16+00:00"
+            "time": "2026-10-26T08:06:40+00:00"
         },
         {
             "name": "twig/extra-bundle",
@@ -9953,10 +9951,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "symsvel-framework/core": 20,
-        "symsvel-framework/tooling": 20
-    },
+    "stability-flags": {},
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
