@@ -97,7 +97,7 @@
     },
     "extra": {
         "symfony": {
-            "allow-contrib": false,
+            "allow-contrib": true,
             "require": "8.1.*"
         }
     },
@@ -112,6 +112,10 @@
         "symsvel-framework/tooling": "^1.0"
     },
     "repositories": [
+        {
+            "type": "composer",
+            "url": "https://packages.xavier-tezza.fr"
+        },
         {
             "type": "vcs",
             "url": "https://github.com/Symsvel-Framework/symsvel-core.git"
