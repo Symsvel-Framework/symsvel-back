@@ -7,7 +7,7 @@ use Symfony\Component\Process\Process;
 require dirname(__DIR__).'/vendor/autoload.php';
 
 $backend = dirname(__DIR__);
-if (!is_dir($backend.'/vendor/symsvel-framework/tooling')) {
+if (!is_file($backend.'/vendor/symsvel-framework/tooling/src/Command/SymSvelModuleSyncCommand.php')) {
     // Tooling is a development dependency and may be absent in production.
     exit(0);
 }
