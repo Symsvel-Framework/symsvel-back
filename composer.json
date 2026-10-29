@@ -81,10 +81,12 @@
             "assets:install %PUBLIC_DIR%": "symfony-cmd"
         },
         "post-install-cmd": [
-            "@auto-scripts"
+            "@auto-scripts",
+            "@php scripts/symsvel-module-sync.php"
         ],
         "post-update-cmd": [
-            "@auto-scripts"
+            "@auto-scripts",
+            "@php scripts/symsvel-module-sync.php"
         ],
         "qa": [
             "@composer validate --no-check-publish",
