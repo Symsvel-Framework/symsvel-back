@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "modules": [
+    "symsvel-framework/module-roles"
+  ]
+}
