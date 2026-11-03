@@ -33,21 +33,14 @@ Before merging API changes, verify that:
 3. Preflight and ordinary cross-origin requests behave as expected for both allowed and disallowed origins.
 4. Symfony container lint, automated tests and Composer lock validation pass.
 
-## Legacy audit
+## Routing architecture: adopted decision (2026-11-03)
 
-XCore imported generated module routes via `config/routes/xcore_routing.yaml`. Its Nelmio documentation defined separate `default` and `apibo` areas. SymSvel should retain the useful contracts, but generated module routing must be reconciled with the existing module synchronization implementation before introducing or replacing a generator.
+SymSvel keeps **one Symfony Flex-managed route file per module**, installed from that module's recipe at `config/routes/<module>.yaml`. The recipe imports controller attributes from the module bundle. This is intentionally different from XCore's generated central `xcore_routing.yaml`.
 
-## Routing audit findings (2026-11-03)
+Do **not** introduce an aggregate generated routing file or duplicate route imports. The reasons and consequences are recorded in [ADR 0003](adr/0003-routage-flex.md). The XCore comparison and selection criteria are recorded in [ADR 0004](adr/0004-selection-xcore.md).
 
-- The legacy backend's `config/routes.yaml` explicitly imported `routes/xcore_routing.yaml`. That generated file contains a warning not to edit it manually and is published by `xcore:module:sync`.
-- The current SymSvel backend's `config/routes.yaml` imports `routing.controllers` only. There is no `config/routes/symsvel_routing.yaml` in the current branch.
-- The current `symsvel:module:sync` command in Tooling publishes Composer/local inventories and bundle maps, and synchronizes Svelte files. Its implementation does not itself write a generated Symfony routes file.
-- The backend Composer post-install/post-update script runs `symsvel:module:sync --source=composer`. Any future route materialization must fit this lifecycle, preserve module ownership and not bypass validation/rollback guarantees.
+When resuming module lifecycle work, explicitly crash-test that routes appear after `symsvel require` and disappear after `symsvel remove`, including Flex recipe cleanup. This remains a test requirement, **not an unresolved architectural decision**.
 
-**Decision pending implementation:** audit the installed-module route manifests and Symfony Flex route imports before introducing a generated route file. Do not assume that adding an empty generated file would solve module routing.
+## Scope of the current API work
 
-## Flex recipes versus generated routing
-
-The current Tooling `ModuleMaker` produces a `recipe/recipe.json` template containing a Symfony Flex `config/routes/<module>.yaml` file. This route file imports controller attributes from the installed module bundle. Thus, the current SymSvel contract uses **Flex-managed per-module route imports**, unlike XCore's single generated aggregate file.
-
-Do not add a second aggregate route import without a migration design: doing so could register the same controller routes twice. First verify route presence after `symsvel require` and removal after `symsvel remove`, including Flex recipe cleanup. If tests reveal a gap, fix the actual lifecycle rather than introducing an unneeded duplicate routing system.
+The HTTP functional tests check both OpenAPI JSON documents and CORS preflight handling for an allowed and a disallowed origin. They do not yet prove that a real business endpoint's documented schemas match its runtime responses, nor that Swagger UI assets render in a browser. Those checks must accompany the first concrete API endpoints and the interface integration work.
