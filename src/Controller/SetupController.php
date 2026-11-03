@@ -17,7 +17,7 @@ final class SetupController extends AbstractController
     {
         $workspace = dirname((string) $this->getParameter('kernel.project_dir'));
         $stateFile = $workspace.'/.symsvel/setup.json';
-        if (is_link($stateFile) || !is_file($stateFile)) {
+        if (is_link($workspace.'/.symsvel') || is_link($stateFile) || !is_file($stateFile)) {
             throw $this->createNotFoundException();
         }
         try {
@@ -53,6 +53,9 @@ final class SetupController extends AbstractController
             if (is_link($envFile)) {
                 return new Response('Configuration symbolique interdite.', Response::HTTP_FORBIDDEN);
             }
+            if (file_exists($envFile) && !is_file($envFile)) {
+                return new Response('Configuration existante invalide.', Response::HTTP_FORBIDDEN);
+            }
             $existing = is_file($envFile) ? (string) file_get_contents($envFile) : '';
             $lines = preg_split('/\r\n|\n|\r/', $existing) ?: [];
             $lines = array_values(array_filter($lines, static fn (string $line): bool => preg_match('/^\s*DATABASE_URL\s*=/', $line) !== 1));
@@ -63,6 +66,7 @@ final class SetupController extends AbstractController
                 throw new \RuntimeException('Impossible de préparer la configuration.');
             }
             try {
+                chmod($temporary, 0600);
                 if (file_put_contents($temporary, $contents) === false || !rename($temporary, $envFile)) {
                     throw new \RuntimeException('Impossible d’enregistrer la configuration.');
                 }
