@@ -36,3 +36,12 @@ Before merging API changes, verify that:
 ## Legacy audit
 
 XCore imported generated module routes via `config/routes/xcore_routing.yaml`. Its Nelmio documentation defined separate `default` and `apibo` areas. SymSvel should retain the useful contracts, but generated module routing must be reconciled with the existing module synchronization implementation before introducing or replacing a generator.
+
+## Routing audit findings (2026-11-03)
+
+- The legacy backend's `config/routes.yaml` explicitly imported `routes/xcore_routing.yaml`. That generated file contains a warning not to edit it manually and is published by `xcore:module:sync`.
+- The current SymSvel backend's `config/routes.yaml` imports `routing.controllers` only. There is no `config/routes/symsvel_routing.yaml` in the current branch.
+- The current `symsvel:module:sync` command in Tooling publishes Composer/local inventories and bundle maps, and synchronizes Svelte files. Its implementation does not itself write a generated Symfony routes file.
+- The backend Composer post-install/post-update script runs `symsvel:module:sync --source=composer`. Any future route materialization must fit this lifecycle, preserve module ownership and not bypass validation/rollback guarantees.
+
+**Decision pending implementation:** audit the installed-module route manifests and Symfony Flex route imports before introducing a generated route file. Do not assume that adding an empty generated file would solve module routing.
