@@ -88,11 +88,12 @@ jobs:
           echo "::add-mask::$SYMSVEL_READ_TOKEN"
           composer config --global github-oauth.github.com "$SYMSVEL_READ_TOKEN"
           git config --global url."https://x-access-token:${SYMSVEL_READ_TOKEN}@github.com/".insteadOf "git@github.com:"
-      - name: Create project in backend directory
+      - name: Prepare project from the exact checked-out commit
         run: |
-          mkdir -p "$RUNNER_TEMP/symsvel-workspace"
-          composer create-project --repository='{"type":"vcs","url":"https://github.com/Symsvel-Framework/symsvel-back.git"}' symsvel-framework/back "$RUNNER_TEMP/symsvel-workspace/backend" dev-main --no-interaction --prefer-dist --no-progress
+          mkdir -p "$RUNNER_TEMP/symsvel-workspace/backend"
+          cp -a "$GITHUB_WORKSPACE/." "$RUNNER_TEMP/symsvel-workspace/backend/"
           cd "$RUNNER_TEMP/symsvel-workspace/backend"
+          composer install --no-interaction --prefer-dist --no-progress
       - name: Install and build all SvelteKit interfaces
         run: |
           cd "$RUNNER_TEMP/symsvel-workspace/backend"
