@@ -45,3 +45,9 @@ XCore imported generated module routes via `config/routes/xcore_routing.yaml`. I
 - The backend Composer post-install/post-update script runs `symsvel:module:sync --source=composer`. Any future route materialization must fit this lifecycle, preserve module ownership and not bypass validation/rollback guarantees.
 
 **Decision pending implementation:** audit the installed-module route manifests and Symfony Flex route imports before introducing a generated route file. Do not assume that adding an empty generated file would solve module routing.
+
+## Flex recipes versus generated routing
+
+The current Tooling `ModuleMaker` produces a `recipe/recipe.json` template containing a Symfony Flex `config/routes/<module>.yaml` file. This route file imports controller attributes from the installed module bundle. Thus, the current SymSvel contract uses **Flex-managed per-module route imports**, unlike XCore's single generated aggregate file.
+
+Do not add a second aggregate route import without a migration design: doing so could register the same controller routes twice. First verify route presence after `symsvel require` and removal after `symsvel remove`, including Flex recipe cleanup. If tests reveal a gap, fix the actual lifecycle rather than introducing an unneeded duplicate routing system.
