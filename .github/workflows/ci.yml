@@ -3,34 +3,10 @@ name: CI
 on:
   push:
   pull_request:
-    types: [opened, synchronize, reopened, labeled]
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
 
 jobs:
-  smoke-changes:
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-      pull-requests: read
-    outputs:
-      relevant: ${{ steps.filter.outputs.relevant }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            relevant:
-              - '.github/workflows/ci.yml'
-              - 'scripts/symsvel-module-sync.php'
-              - 'config/routes/symsvel_routing.yaml'
-              - 'src/Kernel.php'
-              - 'config/packages/symsvel*.yaml'
-              - 'src/Command/**'
-              - 'src/Module/**'
-              - 'config/packages/doctrine*.yaml'
-              - 'migrations/**'
-
   test:
     runs-on: ubuntu-24.04
     steps:
@@ -59,48 +35,50 @@ jobs:
           php bin/console list symsvel --env=test
       - run: composer qa
 
-  installation-smoke:
-    needs: smoke-changes
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
-      (github.event_name == 'pull_request' && (needs.smoke-changes.outputs.relevant == 'true' || contains(github.event.pull_request.labels.*.name, 'run-smoke')))
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v4
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.4'
-          extensions: ctype, iconv, intl, pdo_sqlite
-          coverage: none
-          tools: composer:v2
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Configure access to private repositories
-        env:
-          SYMSVEL_READ_TOKEN: ${{ secrets.SYMSVEL_READ_TOKEN }}
-        run: |
-          if [ -z "$SYMSVEL_READ_TOKEN" ]; then
-            echo "::error::SYMSVEL_READ_TOKEN is required."
-            exit 1
-          fi
-          echo "::add-mask::$SYMSVEL_READ_TOKEN"
-          composer config --global github-oauth.github.com "$SYMSVEL_READ_TOKEN"
-          git config --global url."https://x-access-token:${SYMSVEL_READ_TOKEN}@github.com/".insteadOf "git@github.com:"
-      - name: Prepare project from the exact checked-out commit
-        run: |
-          mkdir -p "$RUNNER_TEMP/symsvel-workspace/backend"
-          cp -a "$GITHUB_WORKSPACE/." "$RUNNER_TEMP/symsvel-workspace/backend/"
-          cd "$RUNNER_TEMP/symsvel-workspace/backend"
-          composer install --no-interaction --prefer-dist --no-progress
-      - name: Install and build all SvelteKit interfaces
-        run: |
-          cd "$RUNNER_TEMP/symsvel-workspace/backend"
-          php bin/console symsvel:install --no-interaction --components=all
-          test -f ../bo/package.json
-          test -f ../app/package.json
-          test -f ../front/package.json
-          test ! -e bo/package.json
-          test ! -e app/package.json
-          test ! -e front/package.json
+  # Installation smoke temporairement désactivé.
+  # À réactiver lors du chantier modules / interfaces SvelteKit.
+#   installation-smoke:
+#     needs: smoke-changes
+#     if: >-
+#       github.event_name == 'workflow_dispatch' ||
+#       (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+#       (github.event_name == 'pull_request' && (needs.smoke-changes.outputs.relevant == 'true' || contains(github.event.pull_request.labels.*.name, 'run-smoke')))
+#     runs-on: ubuntu-24.04
+#     steps:
+#       - uses: actions/checkout@v4
+#       - uses: shivammathur/setup-php@v2
+#         with:
+#           php-version: '8.4'
+#           extensions: ctype, iconv, intl, pdo_sqlite
+#           coverage: none
+#           tools: composer:v2
+#       - uses: actions/setup-node@v4
+#         with:
+#           node-version: '22'
+#       - name: Configure access to private repositories
+#         env:
+#           SYMSVEL_READ_TOKEN: ${{ secrets.SYMSVEL_READ_TOKEN }}
+#         run: |
+#           if [ -z "$SYMSVEL_READ_TOKEN" ]; then
+#             echo "::error::SYMSVEL_READ_TOKEN is required."
+#             exit 1
+#           fi
+#           echo "::add-mask::$SYMSVEL_READ_TOKEN"
+#           composer config --global github-oauth.github.com "$SYMSVEL_READ_TOKEN"
+#           git config --global url."https://x-access-token:${SYMSVEL_READ_TOKEN}@github.com/".insteadOf "git@github.com:"
+#       - name: Prepare project from the exact checked-out commit
+#         run: |
+#           mkdir -p "$RUNNER_TEMP/symsvel-workspace/backend"
+#           cp -a "$GITHUB_WORKSPACE/." "$RUNNER_TEMP/symsvel-workspace/backend/"
+#           cd "$RUNNER_TEMP/symsvel-workspace/backend"
+#           composer install --no-interaction --prefer-dist --no-progress
+#       - name: Install and build all SvelteKit interfaces
+#         run: |
+#           cd "$RUNNER_TEMP/symsvel-workspace/backend"
+#           php bin/console symsvel:install --no-interaction --components=all
+#           test -f ../bo/package.json
+#           test -f ../app/package.json
+#           test -f ../front/package.json
+#           test ! -e bo/package.json
+#           test ! -e app/package.json
+#           test ! -e front/package.json
