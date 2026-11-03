@@ -105,11 +105,6 @@
                 "https://recipes.xavier-tezza.fr/index.json",
                 "flex://defaults"
             ]
-        },
-        "symsvel": {
-            "native-modules": [
-                "symsvel-framework/module-roles"
-            ]
         }
     },
     "require-dev": {
