@@ -22,12 +22,10 @@ jobs:
           filters: |
             relevant:
               - '.github/workflows/ci.yml'
-              - 'composer.json'
-              - 'composer.lock'
               - 'scripts/symsvel-module-sync.php'
-              - 'config/bundles.php'
               - 'config/routes/symsvel_routing.yaml'
               - 'src/Kernel.php'
+              - 'config/packages/symsvel*.yaml'
               - 'src/Command/**'
               - 'src/Module/**'
               - 'config/packages/doctrine*.yaml'
