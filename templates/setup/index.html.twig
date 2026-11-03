@@ -1,0 +1,17 @@
+{% extends 'base.html.twig' %}
+{% block title %}Installation SymSvel{% endblock %}
+{% block body %}
+<main style="max-width:42rem;margin:5rem auto;font:1rem system-ui,sans-serif;padding:1rem">
+  <h1>Installation SymSvel</h1>
+  <p>Configurez la connexion PostgreSQL du projet. Les migrations seront exécutées après validation.</p>
+  {% for message in app.flashes('setup_error') %}<p role="alert">{{ message }}</p>{% endfor %}
+  <form method="post">
+    <input type="hidden" name="_token" value="{{ csrf_token('symsvel_setup') }}">
+    <label for="setup_token">Jeton d’installation (fichier .symsvel/setup-token)</label>
+    <input id="setup_token" name="setup_token" type="password" required autocomplete="off" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
+    <label for="database_url">DATABASE_URL</label>
+    <input id="database_url" name="database_url" type="password" required autocomplete="off" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
+    <button type="submit">Vérifier et terminer l'installation</button>
+  </form>
+</main>
+{% endblock %}
