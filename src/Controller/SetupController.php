@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Setup\DatabaseConnectionConfig;
 use App\Setup\ProjectMetadata;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -50,11 +51,16 @@ final class SetupController extends AbstractController
                 $this->addFlash('setup_error', $exception->getMessage());
                 return $this->redirectToRoute('symsvel_setup');
             }
-            $url = trim((string) $request->request->get('database_url', ''));
-            $parts = parse_url($url);
-            if ($parts === false || !in_array($parts['scheme'] ?? '', ['postgresql', 'postgres'], true)
-                || empty($parts['host']) || empty($parts['path']) || !isset($parts['user'])) {
-                $this->addFlash('setup_error', 'URL PostgreSQL invalide.');
+            try {
+                $url = (new DatabaseConnectionConfig())->buildUrl(
+                    (string) $request->request->get('db_host', ''),
+                    (string) $request->request->get('db_port', ''),
+                    (string) $request->request->get('db_name', ''),
+                    (string) $request->request->get('db_user', ''),
+                    (string) $request->request->get('db_password', ''),
+                );
+            } catch (\InvalidArgumentException $exception) {
+                $this->addFlash('setup_error', $exception->getMessage());
                 return $this->redirectToRoute('symsvel_setup');
             }
             $backend = (string) $this->getParameter('kernel.project_dir');
