@@ -1,0 +1,46 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\Setup;
+
+use App\Setup\DatabaseConnectionConfig;
+use PHPUnit\Framework\TestCase;
+
+final class DatabaseConnectionConfigTest extends TestCase
+{
+    public function testBuildsPostgresqlUrlAndEncodesCredentials(): void
+    {
+        $url = (new DatabaseConnectionConfig())->buildUrl(' localhost ', '5432', 'my/database', ' user@name ', 'p@ss:/?#%');
+        self::assertSame('postgresql://user%40name:p%40ss%3A%2F%3F%23%25@localhost:5432/my%2Fdatabase', $url);
+    }
+
+    public function testAllowsEmptyPassword(): void
+    {
+        self::assertSame(
+            'postgresql://postgres@127.0.0.1:5432/project',
+            (new DatabaseConnectionConfig())->buildUrl('127.0.0.1', '5432', 'project', 'postgres', ''),
+        );
+    }
+
+    public function testRejectsInvalidFields(): void
+    {
+        $invalid = [
+            ['', '5432', 'project', 'postgres', ''],
+            ['example.com/evil', '5432', 'project', 'postgres', ''],
+            ['localhost', '0', 'project', 'postgres', ''],
+            ['localhost', '65536', 'project', 'postgres', ''],
+            ['localhost', '5432', '', 'postgres', ''],
+            ['localhost', '5432', 'project', '', ''],
+            ['localhost', '5432', 'project', 'postgres', "bad\npassword"],
+        ];
+        foreach ($invalid as $fields) {
+            try {
+                (new DatabaseConnectionConfig())->buildUrl(...$fields);
+                self::fail('Invalid connection parameters were accepted.');
+            } catch (\InvalidArgumentException) {
+                self::assertTrue(true);
+            }
+        }
+    }
+}
