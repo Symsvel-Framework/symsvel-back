@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Setup\DatabaseConnectionConfig;
-use App\Setup\ProjectMetadata;
 use App\Setup\PendingAdministrator;
-
+use App\Setup\ProjectMetadata;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -105,13 +104,16 @@ final class SetupController extends AbstractController
                 }
             }
             (new ProjectMetadata())->save($workspace, $projectName);
-            $pendingAdmin->stage($workspace, $adminEmail, $adminPassword);
+            try {
+                $pendingAdmin->stage($workspace, $adminEmail, $adminPassword);
+            } catch (\RuntimeException $exception) {
+                $this->addFlash('setup_error', 'Impossible de préparer le premier administrateur. Vérifiez les permissions du dossier .symsvel.');
+                return $this->redirectToRoute('symsvel_setup');
+            }
             // Do not invoke finalization yet: it currently marks setup completed
             // without consuming the staged administrator. The Admins module must
             // install the account before the setup state can become completed.
-            $this->addFlash('setup_error', 'Configuration enregistrée. La finalisation nécessite le module Admins et la création du premier administrateur.');
-            return $this->redirectToRoute('symsvel_setup');
-
+            return new Response('Configuration et premier administrateur préparés. Finalisation en attente du module Admins.', Response::HTTP_ACCEPTED);
         }
         return $this->render('setup/index.html.twig');
     }
