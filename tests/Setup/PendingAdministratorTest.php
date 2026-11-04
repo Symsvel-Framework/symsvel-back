@@ -27,8 +27,15 @@ final class PendingAdministratorTest extends TestCase
             clearstatcache(true, $path);
             self::assertSame(0600, fileperms($path) & 0777);
 
-            $service->stage($root, 'retry@example.test', 'another-secure-password');
-            self::assertSame('retry@example.test', $service->read($root)['email']);
+            $originalHash = $payload['password_hash'];
+            $service->stage($root, 'developer@example.test', 'correct-horse-battery-123');
+            self::assertSame($originalHash, $service->read($root)['password_hash']);
+            try {
+                $service->stage($root, 'retry@example.test', 'another-secure-password');
+                self::fail('Overwriting staged credentials must be rejected.');
+            } catch (\RuntimeException) {
+                self::assertSame('developer@example.test', $service->read($root)['email']);
+            }
             $service->discard($root);
             self::assertFileDoesNotExist($path);
             $service->discard($root);
