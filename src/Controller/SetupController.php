@@ -107,6 +107,12 @@ final class SetupController extends AbstractController
             }
             (new ProjectMetadata())->save($workspace, $projectName);
             $pendingAdmin->stage($workspace, $adminEmail, $adminPassword);
+            // Do not invoke finalization yet: it currently marks setup completed
+            // without consuming the staged administrator. The Admins module must
+            // install the account before the setup state can become completed.
+            $this->addFlash('setup_error', 'Configuration enregistrée. La finalisation nécessite le module Admins et la création du premier administrateur.');
+            return $this->redirectToRoute('symsvel_setup');
+
             $process = new Process([PHP_BINARY, 'bin/console', 'symsvel:setup:finalize', '--no-interaction'], $backend);
             $process->setTimeout(null);
             $process->run();
