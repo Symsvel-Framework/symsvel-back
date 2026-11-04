@@ -16,7 +16,8 @@ final class PendingAdministrator
         if (filter_var($email, FILTER_VALIDATE_EMAIL) === false || strlen($email) > 254) {
             throw new \InvalidArgumentException('Adresse e-mail administrateur invalide.');
         }
-        if (strlen($plainPassword) < 12 || strlen($plainPassword) > 4096) {
+        if (strlen($plainPassword) < 12 || strlen($plainPassword) > 4096
+            || str_contains($plainPassword, "\0")) {
             throw new \InvalidArgumentException('Le mot de passe administrateur doit contenir au moins 12 caractères.');
         }
 
@@ -63,7 +64,7 @@ final class PendingAdministrator
             || !is_string($payload['email'] ?? null)
             || filter_var($payload['email'], FILTER_VALIDATE_EMAIL) === false
             || !is_string($payload['password_hash'] ?? null)
-            || !password_get_info($payload['password_hash'])['algo']
+            || password_get_info($payload['password_hash'])['algoName'] !== 'argon2id'
             || ($payload['initial_role'] ?? null) !== 'developer') {
             throw new \RuntimeException('Données administrateur temporaires invalides.');
         }
