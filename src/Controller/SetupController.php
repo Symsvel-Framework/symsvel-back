@@ -41,6 +41,11 @@ final class SetupController extends AbstractController
             if ($expected === '' || !hash_equals($expected, $provided)) {
                 return new Response('Jeton d’installation incorrect.', Response::HTTP_FORBIDDEN);
             }
+            $projectName = trim((string) $request->request->get('project_name', ''));
+            if ($projectName === '' || mb_strlen($projectName) > 120 || preg_match('/[\\x00-\\x1F\\x7F]/u', $projectName)) {
+                $this->addFlash('setup_error', 'Le nom du projet doit contenir entre 1 et 120 caractères valides.');
+                return $this->redirectToRoute('symsvel_setup');
+            }
             $url = trim((string) $request->request->get('database_url', ''));
             $parts = parse_url($url);
             if ($parts === false || !in_array($parts['scheme'] ?? '', ['postgresql', 'postgres'], true)
@@ -73,6 +78,26 @@ final class SetupController extends AbstractController
             } finally {
                 if (is_file($temporary)) {
                     unlink($temporary);
+                }
+            }
+            $metadataFile = $workspace.'/.symsvel/project.json';
+            if (is_link($metadataFile) || (file_exists($metadataFile) && !is_file($metadataFile))) {
+                return new Response('Métadonnées du projet invalides.', Response::HTTP_FORBIDDEN);
+            }
+            $metadataTemp = tempnam(dirname($metadataFile), '.project-');
+            if ($metadataTemp === false) {
+                throw new \RuntimeException('Impossible de préparer les métadonnées du projet.');
+            }
+            try {
+                $metadata = json_encode(['schema' => 1, 'name' => $projectName], JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR)."\n";
+                if (!chmod($metadataTemp, 0600)
+                    || file_put_contents($metadataTemp, $metadata) === false
+                    || !rename($metadataTemp, $metadataFile)) {
+                    throw new \RuntimeException('Impossible de publier les métadonnées du projet.');
+                }
+            } finally {
+                if (is_file($metadataTemp)) {
+                    unlink($metadataTemp);
                 }
             }
             $process = new Process([PHP_BINARY, 'bin/console', 'symsvel:setup:finalize', '--no-interaction'], $backend);
