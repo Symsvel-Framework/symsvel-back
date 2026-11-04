@@ -10,7 +10,7 @@ namespace App\Setup;
  */
 final class PendingAdministrator
 {
-    public function stage(string $workspace, string $email, string $plainPassword): void
+    public function validate(string $email, string $plainPassword): void
     {
         $email = trim($email);
         if (filter_var($email, FILTER_VALIDATE_EMAIL) === false || strlen($email) > 254) {
@@ -20,6 +20,13 @@ final class PendingAdministrator
             || str_contains($plainPassword, "\0")) {
             throw new \InvalidArgumentException('Le mot de passe administrateur doit contenir au moins 12 caractères.');
         }
+
+    }
+
+    public function stage(string $workspace, string $email, string $plainPassword): void
+    {
+        $this->validate($email, $plainPassword);
+        $email = trim($email);
 
         $directory = $workspace.'/.symsvel';
         $path = $directory.'/pending-admin.json';
