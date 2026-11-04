@@ -11,6 +11,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Process\Process;
 
 final class SetupController extends AbstractController
 {
@@ -113,7 +114,14 @@ final class SetupController extends AbstractController
             // Do not invoke finalization yet: it currently marks setup completed
             // without consuming the staged administrator. The Admins module must
             // install the account before the setup state can become completed.
-            return new Response('Configuration et premier administrateur préparés. Finalisation en attente du module Admins.', Response::HTTP_ACCEPTED);
+            $process = new Process([PHP_BINARY, 'bin/console', 'symsvel:setup:finalize', '--no-interaction'], $backend);
+            $process->setTimeout(null);
+            $process->run();
+            if (!$process->isSuccessful()) {
+                $this->addFlash('setup_error', 'Finalisation impossible. Vérifiez PostgreSQL, les migrations et le module Admins ; les identifiants temporaires sont conservés.');
+                return $this->redirectToRoute('symsvel_setup');
+            }
+            return new Response('Installation SymSvel terminée.', Response::HTTP_OK);
         }
         return $this->render('setup/index.html.twig');
     }
