@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Setup\ProjectMetadata;
+
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -41,6 +43,13 @@ final class SetupController extends AbstractController
             if ($expected === '' || !hash_equals($expected, $provided)) {
                 return new Response('Jeton d’installation incorrect.', Response::HTTP_FORBIDDEN);
             }
+            $projectName = (string) $request->request->get('project_name', '');
+            try {
+                (new ProjectMetadata())->validate($projectName);
+            } catch (\InvalidArgumentException $exception) {
+                $this->addFlash('setup_error', $exception->getMessage());
+                return $this->redirectToRoute('symsvel_setup');
+            }
             $url = trim((string) $request->request->get('database_url', ''));
             $parts = parse_url($url);
             if ($parts === false || !in_array($parts['scheme'] ?? '', ['postgresql', 'postgres'], true)
@@ -75,6 +84,7 @@ final class SetupController extends AbstractController
                     unlink($temporary);
                 }
             }
+            (new ProjectMetadata())->save($workspace, $projectName);
             $process = new Process([PHP_BINARY, 'bin/console', 'symsvel:setup:finalize', '--no-interaction'], $backend);
             $process->setTimeout(null);
             $process->run();
