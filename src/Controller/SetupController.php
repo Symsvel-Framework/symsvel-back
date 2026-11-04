@@ -6,6 +6,7 @@ namespace App\Controller;
 
 use App\Setup\DatabaseConnectionConfig;
 use App\Setup\ProjectMetadata;
+use App\Setup\PendingAdministrator;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -63,6 +64,20 @@ final class SetupController extends AbstractController
                 $this->addFlash('setup_error', $exception->getMessage());
                 return $this->redirectToRoute('symsvel_setup');
             }
+            $adminEmail = (string) $request->request->get('admin_email', '');
+            $adminPassword = (string) $request->request->get('admin_password', '');
+            $adminPasswordConfirmation = (string) $request->request->get('admin_password_confirmation', '');
+            if (!hash_equals($adminPassword, $adminPasswordConfirmation)) {
+                $this->addFlash('setup_error', 'Les mots de passe administrateur ne correspondent pas.');
+                return $this->redirectToRoute('symsvel_setup');
+            }
+            $pendingAdmin = new PendingAdministrator();
+            try {
+                $pendingAdmin->validate($adminEmail, $adminPassword);
+            } catch (\InvalidArgumentException $exception) {
+                $this->addFlash('setup_error', $exception->getMessage());
+                return $this->redirectToRoute('symsvel_setup');
+            }
             $backend = (string) $this->getParameter('kernel.project_dir');
             $envFile = $backend.'/.env.local';
             if (is_link($envFile)) {
@@ -91,6 +106,7 @@ final class SetupController extends AbstractController
                 }
             }
             (new ProjectMetadata())->save($workspace, $projectName);
+            $pendingAdmin->stage($workspace, $adminEmail, $adminPassword);
             $process = new Process([PHP_BINARY, 'bin/console', 'symsvel:setup:finalize', '--no-interaction'], $backend);
             $process->setTimeout(null);
             $process->run();
