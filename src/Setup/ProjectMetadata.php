@@ -9,7 +9,9 @@ final class ProjectMetadata
     public function validate(string $name): void
     {
         $name = trim($name);
-        if ($name === '' || mb_strlen($name) > 120 || preg_match('/[\x00-\x1F\x7F]/u', $name) !== 0) {
+        $characters = preg_match_all('/./us', $name);
+        if ($name === '' || $characters === false || $characters > 120
+            || preg_match('/[\x00-\x1F\x7F]/u', $name) !== 0) {
             throw new \InvalidArgumentException('Le nom du projet doit contenir entre 1 et 120 caractères valides.');
         }
     }
