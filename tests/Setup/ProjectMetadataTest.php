@@ -35,7 +35,7 @@ final class ProjectMetadataTest extends TestCase
     public function testRejectsInvalidName(): void
     {
         $metadata = new ProjectMetadata();
-        foreach (['', '   ', str_repeat('x', 121), "invalid\nname"] as $name) {
+        foreach (['', '   ', str_repeat('x', 121), "invalid\nname", "\xFF"] as $name) {
             try {
                 $metadata->validate($name);
                 self::fail('Invalid project name was accepted.');
@@ -43,6 +43,11 @@ final class ProjectMetadataTest extends TestCase
                 self::assertTrue(true);
             }
         }
+    }
+
+    public function testAcceptsUnicodeNameWithoutMbstring(): void
+    {
+        (new ProjectMetadata())->validate(str_repeat('é', 120));
     }
 
     public function testRejectsSymlinkedMetadata(): void
