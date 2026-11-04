@@ -47,7 +47,9 @@ final class ProjectMetadataTest extends TestCase
 
     public function testAcceptsUnicodeNameWithoutMbstring(): void
     {
-        (new ProjectMetadata())->validate(str_repeat('é', 120));
+        $metadata = new ProjectMetadata();
+        $metadata->validate(str_repeat('é', 120));
+        self::assertTrue(true, 'A valid 120-character Unicode name is accepted.');
     }
 
     public function testRejectsSymlinkedMetadata(): void
