@@ -35,6 +35,14 @@ final class PendingAdministrator
             throw new \RuntimeException('Stockage temporaire administrateur invalide.');
         }
 
+        if (is_file($path)) {
+            $previous = $this->read($workspace);
+            if (!hash_equals($previous['email'], $email)
+                || !password_verify($plainPassword, $previous['password_hash'])) {
+                throw new \RuntimeException('Administrator credentials already staged; retry with the original credentials.');
+            }
+            return;
+        }
         $hash = password_hash($plainPassword, PASSWORD_ARGON2ID);
         $payload = json_encode([
             'schema' => 1,
