@@ -47,7 +47,9 @@ final class ProjectMetadataTest extends TestCase
 
     public function testAcceptsUnicodeNameWithoutMbstring(): void
     {
-        (new ProjectMetadata())->validate(str_repeat('é', 120));
+        $name = str_repeat('é', 120);
+        (new ProjectMetadata())->validate($name);
+        self::assertSame(120, preg_match_all('/./us', $name));
     }
 
     public function testRejectsSymlinkedMetadata(): void
