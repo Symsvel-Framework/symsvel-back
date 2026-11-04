@@ -22,6 +22,7 @@ final class PendingAdministratorTest extends TestCase
             self::assertSame('developer@example.test', $payload['email']);
             self::assertSame('developer', $payload['initial_role']);
             self::assertTrue(password_verify('correct-horse-battery-123', $payload['password_hash']));
+            self::assertSame('argon2id', password_get_info($payload['password_hash'])['algoName']);
             self::assertStringNotContainsString('correct-horse-battery-123', (string) file_get_contents($path));
             clearstatcache(true, $path);
             self::assertSame(0600, fileperms($path) & 0777);
@@ -41,7 +42,7 @@ final class PendingAdministratorTest extends TestCase
     public function testRejectsInvalidEmailAndPassword(): void
     {
         $service = new PendingAdministrator();
-        foreach ([['invalid', 'correct-horse-battery-123'], ['a@example.test', 'short']] as [$email, $password]) {
+        foreach ([['invalid', 'correct-horse-battery-123'], ['a@example.test', 'short'], ['a@example.test', "valid-password\0suffix"]] as [$email, $password]) {
             try {
                 $service->stage(sys_get_temp_dir(), $email, $password);
                 self::fail('Invalid administrator data accepted.');
