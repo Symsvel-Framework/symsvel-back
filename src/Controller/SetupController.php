@@ -11,7 +11,6 @@ use App\Setup\PendingAdministrator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Process\Process;
 use Symfony\Component\Routing\Attribute\Route;
 
 final class SetupController extends AbstractController
@@ -113,15 +112,6 @@ final class SetupController extends AbstractController
             $this->addFlash('setup_error', 'Configuration enregistrée. La finalisation nécessite le module Admins et la création du premier administrateur.');
             return $this->redirectToRoute('symsvel_setup');
 
-            $process = new Process([PHP_BINARY, 'bin/console', 'symsvel:setup:finalize', '--no-interaction'], $backend);
-            $process->setTimeout(null);
-            $process->run();
-            if (!$process->isSuccessful()) {
-                $this->addFlash('setup_error', 'Finalisation impossible. Vérifiez la connexion PostgreSQL et les migrations.');
-                return $this->redirectToRoute('symsvel_setup');
-            }
-            @unlink($tokenFile);
-            return new Response('Installation SymSvel terminée.', Response::HTTP_OK);
         }
         return $this->render('setup/index.html.twig');
     }
