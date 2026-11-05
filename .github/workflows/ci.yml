@@ -27,6 +27,8 @@ jobs:
           fi
           echo "::add-mask::$SYMSVEL_READ_TOKEN"
           composer config --global github-oauth.github.com "$SYMSVEL_READ_TOKEN"
+      - name: Validate Composer manifest and lockfile
+        run: composer validate --strict --no-check-publish
       - name: Install locked dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
       - name: Verify bundle registration and command
