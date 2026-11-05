@@ -15,7 +15,7 @@ final class DatabaseConnectionConfig
         $url = $this->buildUrl($host, $port, $database, $user, $password);
         try {
             $pdo = new \PDO(
-                sprintf('pgsql:host=%s;port=%d;dbname=%s;connect_timeout=5', trim($host), (int) $port, trim($database)),
+                sprintf('pgsql:host=%s;port=%d;dbname=%s;connect_timeout=5', trim($host), (int) $port, 'postgres'),
                 trim($user),
                 $password,
                 [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION],
