@@ -58,14 +58,14 @@ final class SetupController extends AbstractController
                 return $this->redirectToRoute('symsvel_setup');
             }
             try {
-                $url = (new DatabaseConnectionConfig())->buildUrl(
+                $url = (new DatabaseConnectionConfig())->buildVerifiedUrl(
                     (string) $request->request->get('db_host', ''),
                     (string) $request->request->get('db_port', ''),
                     (string) $request->request->get('db_name', ''),
                     (string) $request->request->get('db_user', ''),
                     (string) $request->request->get('db_password', ''),
                 );
-            } catch (\InvalidArgumentException $exception) {
+            } catch (\InvalidArgumentException|\RuntimeException $exception) {
                 $this->addFlash('setup_error', $exception->getMessage());
                 return $this->redirectToRoute('symsvel_setup');
             }
