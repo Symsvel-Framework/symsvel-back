@@ -1,6 +1,13 @@
 {
   "schema": 1,
   "modules": [
-    "symsvel-framework/module-roles"
-  ]
+    "symsvel-framework/module-admins",
+    "symsvel-framework/module-roles",
+    "symsvel-framework/module-acls"
+  ],
+  "components": {
+    "app": [
+      "symsvel-framework/module-users"
+    ]
+  }
 }

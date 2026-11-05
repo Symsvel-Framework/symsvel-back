@@ -24,7 +24,17 @@
       <label for="db_password">Mot de passe (facultatif)</label>
       <input id="db_password" name="db_password" type="password" autocomplete="new-password" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
     </fieldset>
-    <button type="submit">Vérifier et terminer l'installation</button>
+    <fieldset>
+      <legend>Premier administrateur</legend>
+      <p>Les identifiants sont préparés de manière sécurisée. Le compte sera créé après les migrations, lorsque le module Admins sera installé.</p>
+      <label for="admin_email">Adresse e-mail</label>
+      <input id="admin_email" name="admin_email" type="email" maxlength="254" required autocomplete="email" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
+      <label for="admin_password">Mot de passe (12 caractères minimum)</label>
+      <input id="admin_password" name="admin_password" type="password" minlength="12" required autocomplete="new-password" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
+      <label for="admin_password_confirmation">Confirmer le mot de passe</label>
+      <input id="admin_password_confirmation" name="admin_password_confirmation" type="password" minlength="12" required autocomplete="new-password" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
+    </fieldset>
+    <button type="submit">Vérifier et poursuivre l'installation</button>
   </form>
 </main>
 {% endblock %}

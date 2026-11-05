@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Setup\DatabaseConnectionConfig;
+use App\Setup\PendingAdministrator;
 use App\Setup\ProjectMetadata;
-
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Process\Process;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Process\Process;
 
 final class SetupController extends AbstractController
 {
@@ -63,6 +63,20 @@ final class SetupController extends AbstractController
                 $this->addFlash('setup_error', $exception->getMessage());
                 return $this->redirectToRoute('symsvel_setup');
             }
+            $adminEmail = (string) $request->request->get('admin_email', '');
+            $adminPassword = (string) $request->request->get('admin_password', '');
+            $adminPasswordConfirmation = (string) $request->request->get('admin_password_confirmation', '');
+            if (!hash_equals($adminPassword, $adminPasswordConfirmation)) {
+                $this->addFlash('setup_error', 'Les mots de passe administrateur ne correspondent pas.');
+                return $this->redirectToRoute('symsvel_setup');
+            }
+            $pendingAdmin = new PendingAdministrator();
+            try {
+                $pendingAdmin->validate($adminEmail, $adminPassword);
+            } catch (\InvalidArgumentException $exception) {
+                $this->addFlash('setup_error', $exception->getMessage());
+                return $this->redirectToRoute('symsvel_setup');
+            }
             $backend = (string) $this->getParameter('kernel.project_dir');
             $envFile = $backend.'/.env.local';
             if (is_link($envFile)) {
@@ -91,14 +105,21 @@ final class SetupController extends AbstractController
                 }
             }
             (new ProjectMetadata())->save($workspace, $projectName);
+            try {
+                $pendingAdmin->stage($workspace, $adminEmail, $adminPassword);
+            } catch (\RuntimeException $exception) {
+                $this->addFlash('setup_error', 'Impossible de préparer le premier administrateur. Vérifiez les permissions du dossier .symsvel.');
+                return $this->redirectToRoute('symsvel_setup');
+            }
+            // Finalization applies native migrations and provisions the staged
+            // administrator before marking setup completed.
             $process = new Process([PHP_BINARY, 'bin/console', 'symsvel:setup:finalize', '--no-interaction'], $backend);
             $process->setTimeout(null);
             $process->run();
             if (!$process->isSuccessful()) {
-                $this->addFlash('setup_error', 'Finalisation impossible. Vérifiez la connexion PostgreSQL et les migrations.');
+                $this->addFlash('setup_error', 'Finalisation impossible. Vérifiez PostgreSQL, les migrations et le module Admins ; les identifiants temporaires sont conservés.');
                 return $this->redirectToRoute('symsvel_setup');
             }
-            @unlink($tokenFile);
             return new Response('Installation SymSvel terminée.', Response::HTTP_OK);
         }
         return $this->render('setup/index.html.twig');
