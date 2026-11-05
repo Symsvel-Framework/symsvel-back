@@ -14,16 +14,16 @@ final class DatabaseConnectionConfig
     {
         $url = $this->buildUrl($host, $port, $database, $user, $password);
         try {
-            $pdo = new \\PDO(
+            $pdo = new \PDO(
                 sprintf('pgsql:host=%s;port=%d;dbname=%s;connect_timeout=5', trim($host), (int) $port, trim($database)),
                 trim($user),
                 $password,
-                [\\PDO::ATTR_ERRMODE => \\PDO::ERRMODE_EXCEPTION],
+                [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION],
             );
             $versionNumber = $pdo->query('SHOW server_version_num')->fetchColumn();
             $version = self::normalizeServerVersion((string) $versionNumber);
-        } catch (\\PDOException $exception) {
-            throw new \\RuntimeException('Connexion PostgreSQL impossible. Vérifiez les paramètres et les droits de la base.', 0, $exception);
+        } catch (\PDOException $exception) {
+            throw new \RuntimeException('Connexion PostgreSQL impossible. Vérifiez les paramètres et les droits de la base.', 0, $exception);
         }
 
         return $url.'?serverVersion='.rawurlencode($version);
@@ -32,7 +32,7 @@ final class DatabaseConnectionConfig
     public static function normalizeServerVersion(string $versionNumber): string
     {
         if (!preg_match('/^[0-9]{5,6}$/D', $versionNumber)) {
-            throw new \\RuntimeException('Version PostgreSQL non reconnue.');
+            throw new \RuntimeException('Version PostgreSQL non reconnue.');
         }
         $number = (int) $versionNumber;
         $major = intdiv($number, 10000);
