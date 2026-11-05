@@ -23,6 +23,9 @@ final class SetupController extends AbstractController
         if (is_link($workspace.'/.symsvel') || is_link($stateFile) || !is_file($stateFile)) {
             throw $this->createNotFoundException();
         }
+        if (!is_readable($stateFile)) {
+            return new Response('État d’installation illisible par le processus PHP. Vérifiez les permissions de .symsvel.', Response::HTTP_SERVICE_UNAVAILABLE);
+        }
         try {
             $state = json_decode((string) file_get_contents($stateFile), true, 512, JSON_THROW_ON_ERROR);
         } catch (\JsonException) {
@@ -32,11 +35,17 @@ final class SetupController extends AbstractController
             throw $this->createNotFoundException();
         }
         if ($request->isMethod('POST')) {
+            $stateDirectory = $workspace.'/.symsvel';
+            $backendDirectory = (string) $this->getParameter('kernel.project_dir');
+            if (!is_writable($stateDirectory) || !is_executable($stateDirectory)
+                || !is_writable($backendDirectory) || !is_executable($backendDirectory)) {
+                return new Response('Installation bloquée : le processus PHP ne peut pas écrire les fichiers nécessaires au setup.', Response::HTTP_SERVICE_UNAVAILABLE);
+            }
             if (!$this->isCsrfTokenValid('symsvel_setup', (string) $request->request->get('_token', ''))) {
                 return new Response('Requête invalide.', Response::HTTP_FORBIDDEN);
             }
             $tokenFile = $workspace.'/.symsvel/setup-token';
-            if (is_link($tokenFile) || !is_file($tokenFile)) {
+            if (is_link($tokenFile) || !is_file($tokenFile) || !is_readable($tokenFile)) {
                 return new Response('Jeton d’installation indisponible.', Response::HTTP_FORBIDDEN);
             }
             $expected = trim((string) file_get_contents($tokenFile));
@@ -45,8 +54,10 @@ final class SetupController extends AbstractController
                 return new Response('Jeton d’installation incorrect.', Response::HTTP_FORBIDDEN);
             }
             $projectName = (string) $request->request->get('project_name', '');
+            $localDomain = (string) $request->request->get('local_domain', '');
             try {
                 (new ProjectMetadata())->validate($projectName);
+                (new ProjectMetadata())->validateLocalDomain($localDomain);
             } catch (\InvalidArgumentException $exception) {
                 $this->addFlash('setup_error', $exception->getMessage());
                 return $this->redirectToRoute('symsvel_setup');
@@ -82,8 +93,13 @@ final class SetupController extends AbstractController
             if (is_link($envFile)) {
                 return new Response('Configuration symbolique interdite.', Response::HTTP_FORBIDDEN);
             }
-            if (file_exists($envFile) && !is_file($envFile)) {
+            if (file_exists($envFile) && (!is_file($envFile) || !is_readable($envFile))) {
                 return new Response('Configuration existante invalide.', Response::HTTP_FORBIDDEN);
+            }
+            $pendingAdminFile = $workspace.'/.symsvel/pending-admin.json';
+            if (is_link($pendingAdminFile) || (file_exists($pendingAdminFile)
+                && (!is_file($pendingAdminFile) || !is_readable($pendingAdminFile)))) {
+                return new Response('Données administrateur temporaires inaccessibles ou invalides.', Response::HTTP_SERVICE_UNAVAILABLE);
             }
             $existing = is_file($envFile) ? (string) file_get_contents($envFile) : '';
             $lines = preg_split('/\r\n|\n|\r/', $existing) ?: [];
@@ -104,7 +120,7 @@ final class SetupController extends AbstractController
                     unlink($temporary);
                 }
             }
-            (new ProjectMetadata())->save($workspace, $projectName);
+            (new ProjectMetadata())->save($workspace, $projectName, $localDomain);
             try {
                 $pendingAdmin->stage($workspace, $adminEmail, $adminPassword);
             } catch (\RuntimeException $exception) {
@@ -117,7 +133,7 @@ final class SetupController extends AbstractController
             $process->setTimeout(null);
             $process->run();
             if (!$process->isSuccessful()) {
-                $this->addFlash('setup_error', 'Finalisation impossible. Vérifiez PostgreSQL, les migrations et le module Admins ; les identifiants temporaires sont conservés.');
+                $this->addFlash('setup_error', 'Finalisation impossible. Vérifiez PostgreSQL, les migrations et le module Admins, puis relancez le Setup.');
                 return $this->redirectToRoute('symsvel_setup');
             }
             return new Response('Installation SymSvel terminée.', Response::HTTP_OK);
