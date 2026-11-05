@@ -43,4 +43,18 @@ final class DatabaseConnectionConfigTest extends TestCase
             }
         }
     }
+    public function testNormalizesPostgresqlServerVersions(): void
+    {
+        self::assertSame('9.6.24', DatabaseConnectionConfig::normalizeServerVersion('90624'));
+        self::assertSame('12.0.19', DatabaseConnectionConfig::normalizeServerVersion('120019'));
+        self::assertSame('16.0.4', DatabaseConnectionConfig::normalizeServerVersion('160004'));
+        self::assertSame('17.0.0', DatabaseConnectionConfig::normalizeServerVersion('170000'));
+    }
+
+    public function testRejectsMissingServerVersion(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        DatabaseConnectionConfig::normalizeServerVersion('');
+    }
+
 }
