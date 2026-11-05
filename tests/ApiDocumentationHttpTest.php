@@ -38,6 +38,29 @@ final class ApiDocumentationHttpTest extends WebTestCase
         self::assertStringContainsString('POST', (string) $client->getResponse()->headers->get('Access-Control-Allow-Methods'));
     }
 
+    public function testSwaggerUiPagesAreServedForBothAreas(): void
+    {
+        $client = static::createClient();
+
+        foreach (['/api/doc', '/apibo/doc'] as $path) {
+            $client->request('GET', $path);
+            self::assertResponseIsSuccessful($path);
+            self::assertStringContainsString('swagger', strtolower((string) $client->getResponse()->getContent()));
+        }
+    }
+
+    public function testCorsPreflightWorksForBackOfficeApi(): void
+    {
+        $client = static::createClient();
+        $client->request('OPTIONS', '/apibo/example', [], [], [
+            'HTTP_ORIGIN' => 'http://127.0.0.1:5173',
+            'HTTP_ACCESS_CONTROL_REQUEST_METHOD' => 'GET',
+        ]);
+
+        self::assertResponseIsSuccessful();
+        self::assertSame('http://127.0.0.1:5173', $client->getResponse()->headers->get('Access-Control-Allow-Origin'));
+    }
+
     public function testCorsDoesNotAllowUnconfiguredOrigin(): void
     {
         $client = static::createClient();
