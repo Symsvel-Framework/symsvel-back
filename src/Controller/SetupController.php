@@ -34,6 +34,10 @@ final class SetupController extends AbstractController
         if (($state['schema'] ?? null) !== 1 || !in_array($state['status'] ?? null, ['pending', 'running'], true)) {
             throw $this->createNotFoundException();
         }
+        // Setup is a local-only operation, not a publicly accessible installer.
+        if (!in_array($request->getClientIp(), ['127.0.0.1', '::1'], true)) {
+            return new Response('Installation accessible uniquement en local.', Response::HTTP_FORBIDDEN);
+        }
         if ($request->isMethod('POST')) {
             $stateDirectory = $workspace.'/.symsvel';
             $backendDirectory = (string) $this->getParameter('kernel.project_dir');
@@ -43,15 +47,6 @@ final class SetupController extends AbstractController
             }
             if (!$this->isCsrfTokenValid('symsvel_setup', (string) $request->request->get('_token', ''))) {
                 return new Response('Requête invalide.', Response::HTTP_FORBIDDEN);
-            }
-            $tokenFile = $workspace.'/.symsvel/setup-token';
-            if (is_link($tokenFile) || !is_file($tokenFile) || !is_readable($tokenFile)) {
-                return new Response('Jeton d’installation indisponible.', Response::HTTP_FORBIDDEN);
-            }
-            $expected = trim((string) file_get_contents($tokenFile));
-            $provided = (string) $request->request->get('setup_token', '');
-            if ($expected === '' || !hash_equals($expected, $provided)) {
-                return new Response('Jeton d’installation incorrect.', Response::HTTP_FORBIDDEN);
             }
             $projectName = (string) $request->request->get('project_name', '');
             $localDomain = (string) $request->request->get('local_domain', '');
