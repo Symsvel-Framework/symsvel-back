@@ -91,8 +91,13 @@ final class SetupController extends AbstractController
             if (is_link($envFile)) {
                 return new Response('Configuration symbolique interdite.', Response::HTTP_FORBIDDEN);
             }
-            if (file_exists($envFile) && !is_file($envFile)) {
+            if (file_exists($envFile) && (!is_file($envFile) || !is_readable($envFile))) {
                 return new Response('Configuration existante invalide.', Response::HTTP_FORBIDDEN);
+            }
+            $pendingAdminFile = $workspace.'/.symsvel/pending-admin.json';
+            if (is_link($pendingAdminFile) || (file_exists($pendingAdminFile)
+                && (!is_file($pendingAdminFile) || !is_readable($pendingAdminFile)))) {
+                return new Response('Données administrateur temporaires inaccessibles ou invalides.', Response::HTTP_SERVICE_UNAVAILABLE);
             }
             $existing = is_file($envFile) ? (string) file_get_contents($envFile) : '';
             $lines = preg_split('/\r\n|\n|\r/', $existing) ?: [];
