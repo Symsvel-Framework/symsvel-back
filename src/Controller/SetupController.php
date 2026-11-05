@@ -39,7 +39,7 @@ final class SetupController extends AbstractController
             $backendDirectory = (string) $this->getParameter('kernel.project_dir');
             if (!is_writable($stateDirectory) || !is_executable($stateDirectory)
                 || !is_writable($backendDirectory) || !is_executable($backendDirectory)) {
-                return new Response('Installation bloquée : le processus PHP doit pouvoir écrire dans .symsvel et backend. Configurez un utilisateur commun, un groupe partagé ou des ACL adaptées ; aucun chmod automatique n’est effectué.', Response::HTTP_SERVICE_UNAVAILABLE);
+                return new Response('Installation bloquée : le processus PHP ne peut pas écrire les fichiers nécessaires au setup.', Response::HTTP_SERVICE_UNAVAILABLE);
             }
             if (!$this->isCsrfTokenValid('symsvel_setup', (string) $request->request->get('_token', ''))) {
                 return new Response('Requête invalide.', Response::HTTP_FORBIDDEN);
