@@ -111,9 +111,8 @@ final class SetupController extends AbstractController
                 $this->addFlash('setup_error', 'Impossible de préparer le premier administrateur. Vérifiez les permissions du dossier .symsvel.');
                 return $this->redirectToRoute('symsvel_setup');
             }
-            // Do not invoke finalization yet: it currently marks setup completed
-            // without consuming the staged administrator. The Admins module must
-            // install the account before the setup state can become completed.
+            // Finalization applies native migrations and provisions the staged
+            // administrator before marking setup completed.
             $process = new Process([PHP_BINARY, 'bin/console', 'symsvel:setup:finalize', '--no-interaction'], $backend);
             $process->setTimeout(null);
             $process->run();
