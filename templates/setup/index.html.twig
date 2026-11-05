@@ -7,8 +7,6 @@
   {% for message in app.flashes('setup_error') %}<p role="alert">{{ message }}</p>{% endfor %}
   <form method="post">
     <input type="hidden" name="_token" value="{{ csrf_token('symsvel_setup') }}">
-    <label for="setup_token">Jeton d’installation (fichier .symsvel/setup-token)</label>
-    <input id="setup_token" name="setup_token" type="password" required autocomplete="off" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
     <label for="project_name">Nom du projet</label>
     <input id="project_name" name="project_name" type="text" maxlength="120" required autocomplete="organization" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
     <label for="local_domain">Domaine local du projet (sans protocole ni port)</label>
