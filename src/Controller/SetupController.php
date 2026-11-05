@@ -23,6 +23,9 @@ final class SetupController extends AbstractController
         if (is_link($workspace.'/.symsvel') || is_link($stateFile) || !is_file($stateFile)) {
             throw $this->createNotFoundException();
         }
+        if (!is_readable($stateFile)) {
+            return new Response('État d’installation illisible par le processus PHP. Vérifiez les permissions de .symsvel.', Response::HTTP_SERVICE_UNAVAILABLE);
+        }
         try {
             $state = json_decode((string) file_get_contents($stateFile), true, 512, JSON_THROW_ON_ERROR);
         } catch (\JsonException) {
@@ -32,11 +35,17 @@ final class SetupController extends AbstractController
             throw $this->createNotFoundException();
         }
         if ($request->isMethod('POST')) {
+            $stateDirectory = $workspace.'/.symsvel';
+            $backendDirectory = (string) $this->getParameter('kernel.project_dir');
+            if (!is_writable($stateDirectory) || !is_executable($stateDirectory)
+                || !is_writable($backendDirectory) || !is_executable($backendDirectory)) {
+                return new Response('Installation bloquée : le processus PHP doit pouvoir écrire dans .symsvel et backend. Configurez un utilisateur commun, un groupe partagé ou des ACL adaptées ; aucun chmod automatique n’est effectué.', Response::HTTP_SERVICE_UNAVAILABLE);
+            }
             if (!$this->isCsrfTokenValid('symsvel_setup', (string) $request->request->get('_token', ''))) {
                 return new Response('Requête invalide.', Response::HTTP_FORBIDDEN);
             }
             $tokenFile = $workspace.'/.symsvel/setup-token';
-            if (is_link($tokenFile) || !is_file($tokenFile)) {
+            if (is_link($tokenFile) || !is_file($tokenFile) || !is_readable($tokenFile)) {
                 return new Response('Jeton d’installation indisponible.', Response::HTTP_FORBIDDEN);
             }
             $expected = trim((string) file_get_contents($tokenFile));
