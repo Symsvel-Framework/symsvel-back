@@ -131,7 +131,7 @@ final class SetupController extends AbstractController
             $process->setTimeout(null);
             $process->run();
             if (!$process->isSuccessful()) {
-                $this->addFlash('setup_error', 'Finalisation impossible. Vérifiez PostgreSQL, les migrations et le module Admins ; les identifiants temporaires sont conservés.');
+                $this->addFlash('setup_error', 'Finalisation impossible. Vérifiez PostgreSQL, les migrations et le module Admins, puis relancez le Setup.');
                 return $this->redirectToRoute('symsvel_setup');
             }
             return new Response('Installation SymSvel terminée.', Response::HTTP_OK);
