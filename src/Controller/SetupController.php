@@ -7,6 +7,7 @@ namespace App\Controller;
 use App\Setup\DatabaseConnectionConfig;
 use App\Setup\PendingAdministrator;
 use App\Setup\ProjectMetadata;
+use SymSvel\Tooling\Installation\SetupAccessPreflight;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -35,11 +36,9 @@ final class SetupController extends AbstractController
             throw $this->createNotFoundException();
         }
         if ($request->isMethod('POST')) {
-            $stateDirectory = $workspace.'/.symsvel';
-            $backendDirectory = (string) $this->getParameter('kernel.project_dir');
-            if (!is_writable($stateDirectory) || !is_executable($stateDirectory)
-                || !is_writable($backendDirectory) || !is_executable($backendDirectory)) {
-                return new Response('Installation bloquée : le processus PHP doit pouvoir écrire dans .symsvel et backend. Configurez un utilisateur commun, un groupe partagé ou des ACL adaptées ; aucun chmod automatique n’est effectué.', Response::HTTP_SERVICE_UNAVAILABLE);
+            $accessErrors = (new SetupAccessPreflight())->check($workspace);
+            if ($accessErrors !== []) {
+                return new Response('Installation bloquée : '.implode(' ', $accessErrors), Response::HTTP_SERVICE_UNAVAILABLE);
             }
             if (!$this->isCsrfTokenValid('symsvel_setup', (string) $request->request->get('_token', ''))) {
                 return new Response('Requête invalide.', Response::HTTP_FORBIDDEN);
