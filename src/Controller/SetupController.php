@@ -54,8 +54,10 @@ final class SetupController extends AbstractController
                 return new Response('Jeton d’installation incorrect.', Response::HTTP_FORBIDDEN);
             }
             $projectName = (string) $request->request->get('project_name', '');
+            $localDomain = (string) $request->request->get('local_domain', '');
             try {
                 (new ProjectMetadata())->validate($projectName);
+                (new ProjectMetadata())->validateLocalDomain($localDomain);
             } catch (\InvalidArgumentException $exception) {
                 $this->addFlash('setup_error', $exception->getMessage());
                 return $this->redirectToRoute('symsvel_setup');
@@ -118,7 +120,7 @@ final class SetupController extends AbstractController
                     unlink($temporary);
                 }
             }
-            (new ProjectMetadata())->save($workspace, $projectName);
+            (new ProjectMetadata())->save($workspace, $projectName, $localDomain);
             try {
                 $pendingAdmin->stage($workspace, $adminEmail, $adminPassword);
             } catch (\RuntimeException $exception) {
