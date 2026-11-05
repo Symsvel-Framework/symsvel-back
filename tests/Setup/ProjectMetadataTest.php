@@ -78,7 +78,7 @@ final class ProjectMetadataTest extends TestCase
         symlink($root.'/target', $root.'/.symsvel/project.json');
         try {
             $this->expectException(\RuntimeException::class);
-            (new ProjectMetadata())->save($root, 'Mon projet');
+            (new ProjectMetadata())->save($root, 'Mon projet', 'xt.localhost');
         } finally {
             @unlink($root.'/.symsvel/project.json');
             @unlink($root.'/target');
