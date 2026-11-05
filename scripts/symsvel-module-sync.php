@@ -23,7 +23,14 @@ if (!$sync->isSuccessful()) {
     exit(1);
 }
 
-// Bootstrap Composer transactions still synchronize module metadata, but defer\n// expensive Svelte builds until all native modules are installed.\nif (getenv('SYMSVEL_DEFER_BUILDS') === '1') {\n    echo "SymSvel: Svelte builds deferred until bootstrap completes.\\n";\n    exit(0);\n}\n\nforeach (['bo', 'app', 'front'] as $scope) {
+// Bootstrap Composer transactions still synchronize module metadata, but defer
+// expensive Svelte builds until all native modules are installed.
+if (getenv('SYMSVEL_DEFER_BUILDS') === '1') {
+    echo "SymSvel: Svelte builds deferred until bootstrap completes.\n";
+    exit(0);
+}
+
+foreach (['bo', 'app', 'front'] as $scope) {
     $directory = dirname($backend).'/'.$scope;
     if (!is_dir($directory)) {
         continue;
