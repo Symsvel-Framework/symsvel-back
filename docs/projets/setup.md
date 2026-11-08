@@ -31,3 +31,9 @@ Le parcours cible validé remplace le formulaire unique actuel :
 Les reprises après erreur doivent respecter l'étape déjà validée, sans redemander ni stocker les secrets administrateur. Les permissions de `.env.local` doivent permettre la lecture par le processus PHP tout en protégeant les secrets. Les quatre moteurs nécessitent des tests de connexion, création et migrations. **Ce contrat décrit la cible du chantier, pas une fonctionnalité déjà livrée.**
 
 La sauvegarde des métadonnées du projet conserve désormais le champ `channel` (`dev` ou `stable`) initialisé par la CLI, au lieu de le supprimer lors de l'enregistrement du nom et du domaine. Un test de non-régression couvre ce cas.
+
+## Implémentation intermédiaire de la séparation des écrans
+
+La branche de chantier expose maintenant deux routes locales : `/setup` (configuration PostgreSQL et appel de `symsvel:setup:database`) puis `/setup/admin` (état `database_ready` requis, CSRF indépendant et transmission JSON des identifiants par entrée standard à `symsvel:admins:bootstrap:stdin`). La première phase ne demande plus les identifiants administrateur et ne crée plus `pending-admin.json`. La reprise depuis `database_ready` redirige vers le second écran.
+
+**Ce parcours n'est pas encore terminé** : après création de l'administrateur, le contrôleur affiche un accusé de réception temporaire ; la finalisation des builds, la transition `completed`, la prise en charge multibase et les tests fonctionnels restent à implémenter et valider. Le mécanisme historique de finalisation existe encore pour compatibilité. Ne pas déployer cette branche comme une installation finalisée.
