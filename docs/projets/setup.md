@@ -1,13 +1,21 @@
 # Setup Wizard
 
-Le Setup Wizard configure localement le projet après la création de ses composants par la CLI.
-
-Il prend en charge la configuration initiale du projet, la connexion à la base et la création du premier administrateur selon les mécanismes effectivement disponibles. Les migrations et fixtures interviennent après la configuration de la base.
+Le Setup Wizard est lancé après la création des composants par la CLI. Il est accessible **uniquement en local** pendant la phase d'installation ; son contrôleur vérifie l'adresse du client, l'état `.symsvel/setup.json`, les permissions d'écriture et le jeton CSRF des formulaires.
 
 ```bash
 symsvel setup
 ```
 
-Cette commande reprend le Wizard local si l'initialisation a été interrompue. Aucun jeton de setup n'est à fournir.
+Cette commande permet de reprendre le Wizard après une interruption. La finalisation technique est déléguée à `symsvel setup:finalize` (commande Symfony `symsvel:setup:finalize`). Une interruption du formulaire n'implique pas que les changements déjà effectués dans la base aient été annulés.
 
-La finalisation technique relève de `symsvel setup:finalize`. Voir la [référence CLI](https://github.com/Symsvel-Framework/symsvel-cli/blob/main/docs/reference/commandes.md).
+## Implémentation actuellement vérifiable
+
+Le formulaire recueille le nom du projet, son domaine local, les paramètres de connexion PostgreSQL, l'adresse électronique et le mot de passe du premier administrateur. `DatabaseConnectionConfig` vérifie une connexion PostgreSQL et construit `DATABASE_URL` ; `SetupController` écrit la configuration dans `backend/.env.local`, prépare l'administrateur et exécute la finalisation.
+
+Le Tooling initialise un état local et un jeton interne `.symsvel/setup-token` ; **l'utilisateur n'a pas à saisir un jeton de setup dans le formulaire**. Ce fichier technique doit rester privé et ne doit pas être versionné.
+
+## Contrat cible et limites
+
+L'[ADR 0005](../adr/0005-installation-operationnelle.md) exige une distribution utilisable après setup, avec modules natifs et accès BO/App sécurisés. L'[ADR 0008](../adr/0008-donnees-et-migrations.md) prévoit PostgreSQL, MySQL, MariaDB et SQLite. **À ce stade, le formulaire Setup est spécifique à PostgreSQL.** Ne pas présenter les trois autres moteurs ni les parcours 2FA comme validés.
+
+Le parcours complet de création, configuration BDD, migrations, premier administrateur, authentification et reprise après erreur doit être testé sur XT. Ne jamais modifier artificiellement XT pour masquer un défaut du framework.

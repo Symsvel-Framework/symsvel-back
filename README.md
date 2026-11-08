@@ -1,56 +1,47 @@
 # SymSvel Backend
 
-Socle Symfony 8.1 / PHP 8.4 du framework SymSvel. Projet Composer privé (`type: project`).
+Squelette applicatif Symfony 8.1 / PHP 8.4 de SymSvel Framework (`symsvel-framework/back`, package Composer de type `project`). Le Back contient la configuration et le runtime de l'application ; les fonctionnalités métier appartiennent aux modules. Les décisions sont conservées dans [les ADR](docs/adr/README.md).
 
 ## Créer un projet
 
-Prérequis : PHP 8.4+, Composer 2, Git, accès GitHub aux dépôts privés `Symsvel-Framework` (Composer en HTTPS et Git en SSH).
-
-Configurer une fois le dépôt VCS privé pour Composer :
+**Parcours utilisateur : la CLI SymSvel.**
 
 ```bash
-composer config --global repositories.symsvel-back vcs https://github.com/Symsvel-Framework/symsvel-back
+symsvel doctor
+symsvel create-project --components=all
 ```
 
-Configurer l'authentification GitHub de Composer via `composer config --global --auth github-oauth.github.com <TOKEN>` (ne jamais committer le jeton). Le compte doit avoir accès au dépôt privé.
-
-Une release `v0.1.0` existe déjà. Elle est antérieure aux derniers changements du Tooling. Pour valider le parcours complet, il faudra publier une nouvelle version du Back **uniquement après validation explicite**, avec un `composer.lock` actualisé et une CI verte.
-
-Après publication de cette version :
+Pour un environnement de développement ou de crash-test qui consomme les commits `dev-main` :
 
 ```bash
-mkdir mon-projet
-composer create-project symsvel-framework/back mon-projet/backend
-cd mon-projet/backend
-php bin/console symsvel:install
+symsvel create-project --components=all --dev
 ```
 
-L'installateur propose :
+Le BO est obligatoire. `--components=bo|app|front|all` permet de sélectionner les interfaces. La CLI installe Symfony dans `backend/` et les composants SvelteKit dans les dossiers frères, puis démarre le Setup Wizard local. Le canal `stable` ou `dev` est enregistré dans `backend/.symsvel/project.json`, indépendamment de `APP_ENV`. Le parcours historique `composer create-project` suivi manuellement de `symsvel:install` n'est **plus la procédure utilisateur de référence**.
 
-1. BO uniquement (par défaut)
-2. BO + App
-3. BO + Front
-4. BO + App + Front
+Prérequis : PHP 8.4+, Composer 2, Git et accès aux sources privées selon le canal ; Node.js et npm pour les interfaces. La CLI Symfony facultative n'est pas nécessaire à la CLI SymSvel. Voir [l'installation](docs/demarrage/installation.md) et [le contrat de provenance](https://github.com/Symsvel-Framework/symsvel-cli/blob/feat/persist-project-channel/docs/reference/provenance.md).
 
-Le répertoire du projet contient `backend/`, `bo/`, `app/` et/ou `front/` au même niveau. Composer installe Symfony exclusivement dans `backend/` ; l'installateur clone les interfaces privées en SSH dans les dossiers frères. L'installation est refusée si Symfony n'est pas dans `backend/`. Configurer une clé SSH GitHub avec accès à ces dépôts. Les dossiers existants ne sont jamais écrasés. La version actuelle du Tooling exécute automatiquement `npm ci` puis `npm run build` pour chaque interface. Il faut donc disposer de Node.js/npm localement. Les dossiers nouvellement créés sont supprimés si l'installation échoue, sans toucher aux chemins préexistants.
+## Setup Wizard et modules natifs
 
-**Important :** `create-project` copie le socle à une version donnée. Les mises à jour du backend ne sont pas propagées automatiquement aux projets créés.
+```bash
+symsvel setup
+```
 
-## Préparation du premier crash-test
+Le Wizard local collecte les informations du projet, les paramètres PostgreSQL et les identifiants du premier administrateur. La finalisation applique les migrations et prépare l'administrateur. La configuration de connexion est écrite dans `backend/.env.local`. La création initiale ne doit pas exiger une base déjà configurée.
 
-Le premier test global partira d'un dossier vierge, en utilisant `composer create-project` dans `mon-projet/backend` et devra confirmer : création du Back par Composer, installation des trois interfaces (choix 4), builds SvelteKit réussis, démarrage de Symfony et accès aux pages BO, App et Front dans le navigateur.
+Le manifeste `config/symsvel-native-modules.json` exige Admins, Roles et ACLs ; Users est requis lorsque App est installée. **Le Setup actuel vérifie une connexion PostgreSQL** : la prise en charge MySQL/MariaDB/SQLite dans le Wizard relève de l'objectif architectural, pas d'une fonctionnalité déjà démontrée. L'accès BO/App avec 2FA est un contrat cible à valider séparément ; ne pas le déduire de la seule réussite du formulaire Setup.
 
-**Attention :** le `composer.lock` du Back verrouille une révision précise de Tooling. Le merge de Tooling dans `main` ne met pas automatiquement à jour les projets existants ni les releases du Back. Avant publication d'une nouvelle version, actualiser ce verrouillage via Composer, exécuter `composer qa` et vérifier la CI.
+Voir [le guide Setup](docs/projets/setup.md), [le cycle de vie](docs/architecture/cycle-de-vie.md) et [les ADR](docs/adr/README.md).
 
-Les mises à jour sont exclusivement locales. Aucune commande de mise à jour ne doit s'exécuter sur un serveur de production.
-
-## Qualité
+## Développement, mises à jour et qualité
 
 ```bash
 composer install
 composer qa
 ```
 
-## Releases
+Les modules sont installés et maintenus via la CLI `symsvel require/update/remove`. Les mises à jour des interfaces utilisent un mécanisme natif distinct de la mise à jour des packages Composer ; les fichiers locaux conflictuels ne doivent pas être écrasés. Voir [la mise à jour d'un projet](docs/projets/mise-a-jour.md).
 
-Pousser un tag `vX.Y.Z` sur le commit à publier déclenche le workflow GitHub Release. Il installe les dépendances, exécute `composer qa`, puis publie la release GitHub si les contrôles réussissent. Le dépôt reste privé.
+La distribution stable dépend de releases cohérentes du Back, du Core, du Tooling et des interfaces. **Une CI verte sur une branche de développement ne publie pas automatiquement une nouvelle release ni ne met à jour le `composer.lock` d'un projet existant.** Les parcours complets GitHub/Satis, Setup, modules et rollback doivent être validés par les crash-tests XT avant merge des PR CLI #10 et Tooling #62.
+
+Les mises à jour de maintenance sont locales et ne doivent pas être exécutées directement sur un serveur de production.
