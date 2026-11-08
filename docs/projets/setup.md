@@ -39,3 +39,9 @@ La branche de chantier expose maintenant deux routes locales : `/setup` (configu
 **Ce parcours n'est pas encore terminé** : après création de l'administrateur, le contrôleur affiche un accusé de réception temporaire ; la finalisation des builds, la transition `completed`, la prise en charge multibase et les tests fonctionnels restent à implémenter et valider. Le mécanisme historique de finalisation existe encore pour compatibilité. Ne pas déployer cette branche comme une installation finalisée.
 
 Correctif CI : les classes d'exception pleinement qualifiées du nouveau contrôleur utilisent un seul antislash PHP (`\\JsonException`, `\\InvalidArgumentException`) ; un échappement doublé empêchait le chargement de Symfony pendant `cache:clear`.
+
+## Raccordement de la finalisation à la phase administrateur
+
+Après réussite de `symsvel:admins:bootstrap:stdin`, le contrôleur appelle désormais `symsvel:setup:complete` (Tooling), qui vérifie le compte initial, exécute les builds statiques des interfaces présentes et passe à `completed` seulement si tous réussissent. Un échec conserve `database_ready` ; le second écran propose une action distincte `setup_action=complete` pour relancer uniquement la finalisation, sans mot de passe ni recréation de compte. Les deux actions exigent le CSRF et l'accès local. L'ancien accusé de réception provisoire est supprimé.
+
+**Statut : code poussé, CI Back et tests fonctionnels de reprise encore à valider.** La configuration PostgreSQL reste la seule implémentée ; le support multibase, le parcours d'authentification/2FA et les crash-tests XT restent hors du périmètre validé. Les paragraphes précédents décrivant l'accusé provisoire retracent l'état antérieur du chantier.
