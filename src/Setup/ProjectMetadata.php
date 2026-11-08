@@ -38,12 +38,21 @@ final class ProjectMetadata
             throw new \RuntimeException('Métadonnées du projet invalides.');
         }
 
+        // The CLI owns the project release channel. Setup must not erase it.
+        $existing = [];
+        if (is_file($path)) {
+            $existing = json_decode((string) file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
+            if (!is_array($existing) || ($existing['schema'] ?? null) !== 1) {
+                throw new \RuntimeException('Métadonnées du projet existantes invalides.');
+            }
+        }
+
         $temporary = tempnam($directory, '.project-');
         if ($temporary === false) {
             throw new \RuntimeException('Impossible de préparer les métadonnées du projet.');
         }
         try {
-            $json = json_encode(['schema' => 1, 'name' => $name, 'local_domain' => $localDomain], JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR)."\n";
+            $json = json_encode(array_merge($existing, ['schema' => 1, 'name' => $name, 'local_domain' => $localDomain]), JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR)."\n";
             if (!chmod($temporary, 0600)
                 || file_put_contents($temporary, $json) === false
                 || !rename($temporary, $path)) {
