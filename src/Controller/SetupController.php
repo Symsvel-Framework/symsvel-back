@@ -126,7 +126,7 @@ final class SetupController extends AbstractController
         }
         try {
             $state = json_decode((string) file_get_contents($stateFile), true, 512, JSON_THROW_ON_ERROR);
-        } catch (\\JsonException) {
+        } catch (\JsonException) {
             throw $this->createNotFoundException();
         }
         if (($state['schema'] ?? null) !== 1) {
@@ -148,7 +148,7 @@ final class SetupController extends AbstractController
             }
             try {
                 (new PendingAdministrator())->validate($email, $password);
-            } catch (\\InvalidArgumentException $exception) {
+            } catch (\InvalidArgumentException $exception) {
                 $this->addFlash('setup_error', $exception->getMessage());
                 return $this->redirectToRoute('symsvel_setup_admin');
             }
