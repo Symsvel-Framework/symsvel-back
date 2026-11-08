@@ -19,7 +19,7 @@ symsvel create-project --components=all --dev
 
 Le BO est obligatoire. `--components=bo|app|front|all` permet de sélectionner les interfaces. La CLI installe Symfony dans `backend/` et les composants SvelteKit dans les dossiers frères, puis démarre le Setup Wizard local. Le canal `stable` ou `dev` est enregistré dans `backend/.symsvel/project.json`, indépendamment de `APP_ENV`. Le parcours historique `composer create-project` suivi manuellement de `symsvel:install` n'est **plus la procédure utilisateur de référence**.
 
-Prérequis : PHP 8.4+, Composer 2, Git et accès aux sources privées selon le canal ; Node.js et npm pour les interfaces. La CLI Symfony facultative n'est pas nécessaire à la CLI SymSvel. Voir [l'installation](docs/demarrage/installation.md) et [le contrat de provenance](https://github.com/Symsvel-Framework/symsvel-cli/blob/feat/persist-project-channel/docs/reference/provenance.md).
+Prérequis : PHP 8.4+, Composer 2, Git et accès aux sources privées selon le canal ; Node.js et npm pour les interfaces. La CLI Symfony facultative n'est pas nécessaire à la CLI SymSvel. Voir [l'installation](docs/demarrage/installation.md) et [les fichiers et registres de provenance](https://github.com/Symsvel-Framework/symsvel-cli/blob/feat/persist-project-channel/docs/reference/fichiers.md).
 
 ## Setup Wizard et modules natifs
 
