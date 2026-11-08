@@ -139,29 +139,41 @@ final class SetupController extends AbstractController
             if (!$this->isCsrfTokenValid('symsvel_setup_admin', (string) $request->request->get('_token', ''))) {
                 return new Response('Requête invalide.', Response::HTTP_FORBIDDEN);
             }
-            $email = (string) $request->request->get('admin_email', '');
-            $password = (string) $request->request->get('admin_password', '');
-            $confirmation = (string) $request->request->get('admin_password_confirmation', '');
-            if (!hash_equals($password, $confirmation)) {
-                $this->addFlash('setup_error', 'Les mots de passe administrateur ne correspondent pas.');
+            $action = (string) $request->request->get('setup_action', 'provision');
+            if ($action === 'provision') {
+                $email = (string) $request->request->get('admin_email', '');
+                $password = (string) $request->request->get('admin_password', '');
+                $confirmation = (string) $request->request->get('admin_password_confirmation', '');
+                if (!hash_equals($password, $confirmation)) {
+                    $this->addFlash('setup_error', 'Les mots de passe administrateur ne correspondent pas.');
+                    return $this->redirectToRoute('symsvel_setup_admin');
+                }
+                try {
+                    (new PendingAdministrator())->validate($email, $password);
+                } catch (\InvalidArgumentException $exception) {
+                    $this->addFlash('setup_error', $exception->getMessage());
+                    return $this->redirectToRoute('symsvel_setup_admin');
+                }
+                $process = new Process([PHP_BINARY, 'bin/console', 'symsvel:admins:bootstrap:stdin', '--no-interaction'], $backend);
+                $process->setInput(json_encode(['email' => trim($email), 'password' => $password], JSON_THROW_ON_ERROR));
+                $process->setTimeout(60);
+                $process->run();
+                if (!$process->isSuccessful()) {
+                    $this->addFlash('setup_error', 'Création du premier administrateur impossible. Vérifiez le module Admins et réessayez.');
+                    return $this->redirectToRoute('symsvel_setup_admin');
+                }
+            } elseif ($action !== 'complete') {
+                return new Response('Action de setup invalide.', Response::HTTP_BAD_REQUEST);
+            }
+            // Completion independently verifies the administrator and is safe to retry.
+            $complete = new Process([PHP_BINARY, 'bin/console', 'symsvel:setup:complete', '--no-interaction'], $backend);
+            $complete->setTimeout(null);
+            $complete->run();
+            if (!$complete->isSuccessful()) {
+                $this->addFlash('setup_error', 'Finalisation impossible. Les données sont conservées ; relancez uniquement la finalisation après correction du problème.');
                 return $this->redirectToRoute('symsvel_setup_admin');
             }
-            try {
-                (new PendingAdministrator())->validate($email, $password);
-            } catch (\InvalidArgumentException $exception) {
-                $this->addFlash('setup_error', $exception->getMessage());
-                return $this->redirectToRoute('symsvel_setup_admin');
-            }
-            $process = new Process([PHP_BINARY, 'bin/console', 'symsvel:admins:bootstrap:stdin', '--no-interaction'], $backend);
-            $process->setInput(json_encode(['email' => trim($email), 'password' => $password], JSON_THROW_ON_ERROR));
-            $process->setTimeout(60);
-            $process->run();
-            if (!$process->isSuccessful()) {
-                $this->addFlash('setup_error', 'Création du premier administrateur impossible. Vérifiez le module Admins et réessayez.');
-                return $this->redirectToRoute('symsvel_setup_admin');
-            }
-            // The final builds and completion transition are intentionally separate.
-            return new Response('Premier administrateur créé. Finalisation des builds à venir.', Response::HTTP_OK);
+            return new Response('Installation SymSvel terminée.', Response::HTTP_OK);
         }
         return $this->render('setup/admin.html.twig');
     }
