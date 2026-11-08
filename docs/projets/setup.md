@@ -29,3 +29,5 @@ Le parcours cible validé remplace le formulaire unique actuel :
 3. **Finalisation** : génération des builds BO/App/Front après les migrations et création de l'administrateur, puis passage de l'état du setup à `completed`. La génération des fichiers de traduction est différée à un chantier dédié.
 
 Les reprises après erreur doivent respecter l'étape déjà validée, sans redemander ni stocker les secrets administrateur. Les permissions de `.env.local` doivent permettre la lecture par le processus PHP tout en protégeant les secrets. Les quatre moteurs nécessitent des tests de connexion, création et migrations. **Ce contrat décrit la cible du chantier, pas une fonctionnalité déjà livrée.**
+
+La sauvegarde des métadonnées du projet conserve désormais le champ `channel` (`dev` ou `stable`) initialisé par la CLI, au lieu de le supprimer lors de l'enregistrement du nom et du domaine. Un test de non-régression couvre ce cas.
