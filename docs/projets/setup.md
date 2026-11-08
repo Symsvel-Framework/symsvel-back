@@ -19,3 +19,13 @@ Le Tooling initialise un état local et un jeton interne `.symsvel/setup-token` 
 L'[ADR 0005](../adr/0005-installation-operationnelle.md) exige une distribution utilisable après setup, avec modules natifs et accès BO/App sécurisés. L'[ADR 0008](../adr/0008-donnees-et-migrations.md) prévoit PostgreSQL, MySQL, MariaDB et SQLite. **À ce stade, le formulaire Setup est spécifique à PostgreSQL.** Ne pas présenter les trois autres moteurs ni les parcours 2FA comme validés.
 
 Le parcours complet de création, configuration BDD, migrations, premier administrateur, authentification et reprise après erreur doit être testé sur XT. Ne jamais modifier artificiellement XT pour masquer un défaut du framework.
+
+## Chantier en cours : setup en deux phases et compatibilité multibase
+
+Le parcours cible validé remplace le formulaire unique actuel :
+
+1. **Phase 1, configuration** : nom du projet, domaine local, choix PostgreSQL/MySQL/MariaDB/SQLite et paramètres adaptés au moteur. Après validation : écriture sécurisée de `backend/.env.local`, création de la base si nécessaire et exécution des migrations. Aucun identifiant administrateur n'est demandé ni conservé à cette étape.
+2. **Phase 2, administrateur** : nouvel écran accessible seulement après réussite de la phase 1 ; saisie et création immédiate du premier administrateur, sans `pending-admin.json` ni autre persistance temporaire de ses identifiants.
+3. **Finalisation** : génération des builds BO/App/Front après les migrations et création de l'administrateur, puis passage de l'état du setup à `completed`. La génération des fichiers de traduction est différée à un chantier dédié.
+
+Les reprises après erreur doivent respecter l'étape déjà validée, sans redemander ni stocker les secrets administrateur. Les permissions de `.env.local` doivent permettre la lecture par le processus PHP tout en protégeant les secrets. Les quatre moteurs nécessitent des tests de connexion, création et migrations. **Ce contrat décrit la cible du chantier, pas une fonctionnalité déjà livrée.**
