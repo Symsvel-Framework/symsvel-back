@@ -8,43 +8,27 @@ symsvel setup
 
 Cette commande permet de reprendre le Wizard après une interruption. La finalisation technique est déléguée à `symsvel setup:finalize` (commande Symfony `symsvel:setup:finalize`). Une interruption du formulaire n'implique pas que les changements déjà effectués dans la base aient été annulés.
 
-## Implémentation actuellement vérifiable
+## Périmètre de stabilisation PostgreSQL (novembre 2026)
 
-Le formulaire recueille le nom du projet, son domaine local, les paramètres de connexion PostgreSQL, l'adresse électronique et le mot de passe du premier administrateur. `DatabaseConnectionConfig` vérifie une connexion PostgreSQL et construit `DATABASE_URL` ; `SetupController` écrit la configuration dans `backend/.env.local`, prépare l'administrateur et exécute la finalisation.
+Le chantier en cours stabilise le Setup en deux phases **sur PostgreSQL uniquement**. La prise en charge de MySQL, MariaDB et SQLite, l'import i18n et la 2FA sont explicitement reportés à leurs chantiers respectifs. L'ADR 0008 décrit la cible multibase, pas les moteurs déjà opérationnels.
 
-Le Tooling initialise un état local et un jeton interne `.symsvel/setup-token` ; **l'utilisateur n'a pas à saisir un jeton de setup dans le formulaire**. Ce fichier technique doit rester privé et ne doit pas être versionné.
+### Parcours implémenté sur la branche de travail
 
-## Contrat cible et limites
+1. `symsvel create-project` prépare les composants et leurs dépendances ; les builds Svelte sont différés pendant l'installation initiale.
+2. `GET /setup` affiche le formulaire local : nom du projet, domaine local et paramètres PostgreSQL. Après validation CSRF, `DatabaseConnectionConfig` vérifie la connexion et détecte la version du serveur. `SetupController` écrit `backend/.env.local`, sauvegarde les métadonnées du projet puis appelle `symsvel:setup:database`.
+3. La commande Tooling crée la base si nécessaire, compile et exécute les migrations des modules Composer, puis passe l'état à `database_ready`. Un journal de récupération de migrations en attente bloque la poursuite.
+4. `GET /setup/admin` exige `database_ready`. Le formulaire crée directement le premier administrateur via `symsvel:admins:bootstrap:stdin` ; aucun `pending-admin.json` n'est créé par ce parcours.
+5. `symsvel:setup:complete` vérifie l'administrateur via `symsvel:admins:bootstrap:verify`, lance les builds statiques des composants présents (BO, App, Front) et passe l'état à `completed` uniquement après réussite. En cas d'échec, une action distincte permet de relancer la finalisation sans recréer l'administrateur.
 
-L'[ADR 0005](../adr/0005-installation-operationnelle.md) exige une distribution utilisable après setup, avec modules natifs et accès BO/App sécurisés. L'[ADR 0008](../adr/0008-donnees-et-migrations.md) prévoit PostgreSQL, MySQL, MariaDB et SQLite. **À ce stade, le formulaire Setup est spécifique à PostgreSQL.** Ne pas présenter les trois autres moteurs ni les parcours 2FA comme validés.
+Le Setup est réservé aux accès locaux ; les formulaires vérifient les jetons CSRF. Le fichier `.env.local` est écrit avec des permissions restrictives. Le champ `channel` des métadonnées du projet est préservé.
 
-Le parcours complet de création, configuration BDD, migrations, premier administrateur, authentification et reprise après erreur doit être testé sur XT. Ne jamais modifier artificiellement XT pour masquer un défaut du framework.
+### Validation et limites
 
-## Chantier en cours : setup en deux phases et compatibilité multibase
+**État : implémentation en PR draft, CI individuelles vertes, pas encore validée en crash-test XT.** Les tests automatisés et CI ne remplacent pas la validation du parcours distribué après merge via `dev-main`. La reprise après échec, les permissions effectives sous PHP-FPM, la présence des commandes du module Admins et le fonctionnement complet du Setup doivent être vérifiés avant de considérer la stabilisation terminée.
 
-Le parcours cible validé remplace le formulaire unique actuel :
+La commande historique `symsvel:setup:finalize` existe encore ; elle ne doit pas être confondue avec le nouveau parcours `symsvel:setup:database` puis `symsvel:setup:complete`. Le stockage historique d'administrateur temporaire reste dans le code mais n'est plus utilisé par ce parcours.
 
-1. **Phase 1, configuration** : nom du projet, domaine local, choix PostgreSQL/MySQL/MariaDB/SQLite et paramètres adaptés au moteur. Après validation : écriture sécurisée de `backend/.env.local`, création de la base si nécessaire et exécution des migrations. Aucun identifiant administrateur n'est demandé ni conservé à cette étape.
-2. **Phase 2, administrateur** : nouvel écran accessible seulement après réussite de la phase 1 ; saisie et création immédiate du premier administrateur, sans `pending-admin.json` ni autre persistance temporaire de ses identifiants.
-3. **Finalisation** : génération des builds BO/App/Front après les migrations et création de l'administrateur, puis passage de l'état du setup à `completed`. La génération des fichiers de traduction est différée à un chantier dédié.
-
-Les reprises après erreur doivent respecter l'étape déjà validée, sans redemander ni stocker les secrets administrateur. Les permissions de `.env.local` doivent permettre la lecture par le processus PHP tout en protégeant les secrets. Les quatre moteurs nécessitent des tests de connexion, création et migrations. **Ce contrat décrit la cible du chantier, pas une fonctionnalité déjà livrée.**
-
-La sauvegarde des métadonnées du projet conserve désormais le champ `channel` (`dev` ou `stable`) initialisé par la CLI, au lieu de le supprimer lors de l'enregistrement du nom et du domaine. Un test de non-régression couvre ce cas.
-
-## Implémentation intermédiaire de la séparation des écrans
-
-La branche de chantier expose maintenant deux routes locales : `/setup` (configuration PostgreSQL et appel de `symsvel:setup:database`) puis `/setup/admin` (état `database_ready` requis, CSRF indépendant et transmission JSON des identifiants par entrée standard à `symsvel:admins:bootstrap:stdin`). La première phase ne demande plus les identifiants administrateur et ne crée plus `pending-admin.json`. La reprise depuis `database_ready` redirige vers le second écran.
-
-**Ce parcours n'est pas encore terminé** : après création de l'administrateur, le contrôleur affiche un accusé de réception temporaire ; la finalisation des builds, la transition `completed`, la prise en charge multibase et les tests fonctionnels restent à implémenter et valider. Le mécanisme historique de finalisation existe encore pour compatibilité. Ne pas déployer cette branche comme une installation finalisée.
-
-Correctif CI : les classes d'exception pleinement qualifiées du nouveau contrôleur utilisent un seul antislash PHP (`\\JsonException`, `\\InvalidArgumentException`) ; un échappement doublé empêchait le chargement de Symfony pendant `cache:clear`.
-
-## Raccordement de la finalisation à la phase administrateur
-
-Après réussite de `symsvel:admins:bootstrap:stdin`, le contrôleur appelle désormais `symsvel:setup:complete` (Tooling), qui vérifie le compte initial, exécute les builds statiques des interfaces présentes et passe à `completed` seulement si tous réussissent. Un échec conserve `database_ready` ; le second écran propose une action distincte `setup_action=complete` pour relancer uniquement la finalisation, sans mot de passe ni recréation de compte. Les deux actions exigent le CSRF et l'accès local. L'ancien accusé de réception provisoire est supprimé.
-
-**Statut : code poussé, CI Back et tests fonctionnels de reprise encore à valider.** La configuration PostgreSQL reste la seule implémentée ; le support multibase, le parcours d'authentification/2FA et les crash-tests XT restent hors du périmètre validé. Les paragraphes précédents décrivant l'accusé provisoire retracent l'état antérieur du chantier.
+La compatibilité multibase est hors périmètre de cette stabilisation. Les migrations initiales des modules natifs contiennent encore du SQL spécifique à PostgreSQL ; elles ne sont pas portables en l'état.
 
 ## Audit multibase du 8 novembre 2026
 
