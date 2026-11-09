@@ -33,6 +33,26 @@ final class ProjectMetadataTest extends TestCase
         }
     }
 
+    public function testPreservesCliChannelWhenSavingSetupMetadata(): void
+    {
+        $root = sys_get_temp_dir().'/symsvel-project-channel-'.bin2hex(random_bytes(8));
+        mkdir($root);
+        mkdir($root.'/.symsvel');
+        $path = $root.'/.symsvel/project.json';
+        try {
+            file_put_contents($path, json_encode(['schema' => 1, 'channel' => 'dev'], JSON_THROW_ON_ERROR));
+            (new ProjectMetadata())->save($root, 'Mon projet', 'xt.localhost');
+            self::assertSame(
+                ['schema' => 1, 'channel' => 'dev', 'name' => 'Mon projet', 'local_domain' => 'xt.localhost'],
+                json_decode((string) file_get_contents($path), true, 512, JSON_THROW_ON_ERROR),
+            );
+        } finally {
+            @unlink($path);
+            @rmdir($root.'/.symsvel');
+            @rmdir($root);
+        }
+    }
+
     public function testRejectsInvalidName(): void
     {
         $metadata = new ProjectMetadata();

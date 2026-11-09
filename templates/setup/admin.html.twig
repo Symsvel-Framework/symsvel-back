@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+{% block title %}Premier administrateur SymSvel{% endblock %}
+{% block body %}
+<main style="max-width:42rem;margin:5rem auto;font:1rem system-ui,sans-serif;padding:1rem">
+  <h1>Premier administrateur</h1>
+  <p>Phase 2 sur 2 : la base et les migrations sont prêtes. Les identifiants sont transmis directement au module Admins, sans fichier temporaire.</p>
+  {% for message in app.flashes('setup_error') %}<p role="alert">{{ message }}</p>{% endfor %}
+  <form method="post">
+    <input type="hidden" name="_token" value="{{ csrf_token('symsvel_setup_admin') }}">
+    <input type="hidden" name="setup_action" value="provision">
+    <label for="admin_email">Adresse e-mail</label>
+    <input id="admin_email" name="admin_email" type="email" maxlength="254" required autocomplete="email" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
+    <label for="admin_password">Mot de passe (12 caractères minimum)</label>
+    <input id="admin_password" name="admin_password" type="password" minlength="12" required autocomplete="new-password" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
+    <label for="admin_password_confirmation">Confirmer le mot de passe</label>
+    <input id="admin_password_confirmation" name="admin_password_confirmation" type="password" minlength="12" required autocomplete="new-password" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
+    <button type="submit">Créer le premier administrateur</button>
+  </form>
+  <hr>
+  <p>Si le compte a été créé mais que les builds ont échoué, vous pouvez relancer uniquement la finalisation, sans ressaisir le mot de passe.</p>
+  <form method="post">
+    <input type="hidden" name="_token" value="{{ csrf_token('symsvel_setup_admin') }}">
+    <input type="hidden" name="setup_action" value="complete">
+    <button type="submit">Relancer la finalisation</button>
+  </form>
+</main>
+{% endblock %}

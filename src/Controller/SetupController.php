@@ -31,12 +31,15 @@ final class SetupController extends AbstractController
         } catch (\JsonException) {
             throw $this->createNotFoundException();
         }
-        if (($state['schema'] ?? null) !== 1 || !in_array($state['status'] ?? null, ['pending', 'running'], true)) {
+        if (($state['schema'] ?? null) !== 1 || !in_array($state['status'] ?? null, ['pending', 'running', 'database_ready'], true)) {
             throw $this->createNotFoundException();
         }
         // Setup is a local-only operation, not a publicly accessible installer.
         if (!in_array($request->getClientIp(), ['127.0.0.1', '::1'], true)) {
             return new Response('Installation accessible uniquement en local.', Response::HTTP_FORBIDDEN);
+        }
+        if (($state['status'] ?? null) === 'database_ready') {
+            return $this->redirectToRoute('symsvel_setup_admin');
         }
         if ($request->isMethod('POST')) {
             $stateDirectory = $workspace.'/.symsvel';
@@ -69,20 +72,6 @@ final class SetupController extends AbstractController
                 $this->addFlash('setup_error', $exception->getMessage());
                 return $this->redirectToRoute('symsvel_setup');
             }
-            $adminEmail = (string) $request->request->get('admin_email', '');
-            $adminPassword = (string) $request->request->get('admin_password', '');
-            $adminPasswordConfirmation = (string) $request->request->get('admin_password_confirmation', '');
-            if (!hash_equals($adminPassword, $adminPasswordConfirmation)) {
-                $this->addFlash('setup_error', 'Les mots de passe administrateur ne correspondent pas.');
-                return $this->redirectToRoute('symsvel_setup');
-            }
-            $pendingAdmin = new PendingAdministrator();
-            try {
-                $pendingAdmin->validate($adminEmail, $adminPassword);
-            } catch (\InvalidArgumentException $exception) {
-                $this->addFlash('setup_error', $exception->getMessage());
-                return $this->redirectToRoute('symsvel_setup');
-            }
             $backend = (string) $this->getParameter('kernel.project_dir');
             $envFile = $backend.'/.env.local';
             if (is_link($envFile)) {
@@ -90,11 +79,6 @@ final class SetupController extends AbstractController
             }
             if (file_exists($envFile) && (!is_file($envFile) || !is_readable($envFile))) {
                 return new Response('Configuration existante invalide.', Response::HTTP_FORBIDDEN);
-            }
-            $pendingAdminFile = $workspace.'/.symsvel/pending-admin.json';
-            if (is_link($pendingAdminFile) || (file_exists($pendingAdminFile)
-                && (!is_file($pendingAdminFile) || !is_readable($pendingAdminFile)))) {
-                return new Response('Données administrateur temporaires inaccessibles ou invalides.', Response::HTTP_SERVICE_UNAVAILABLE);
             }
             $existing = is_file($envFile) ? (string) file_get_contents($envFile) : '';
             $lines = preg_split('/\r\n|\n|\r/', $existing) ?: [];
@@ -116,23 +100,82 @@ final class SetupController extends AbstractController
                 }
             }
             (new ProjectMetadata())->save($workspace, $projectName, $localDomain);
-            try {
-                $pendingAdmin->stage($workspace, $adminEmail, $adminPassword);
-            } catch (\RuntimeException $exception) {
-                $this->addFlash('setup_error', 'Impossible de préparer le premier administrateur. Vérifiez les permissions du dossier .symsvel.');
-                return $this->redirectToRoute('symsvel_setup');
-            }
-            // Finalization applies native migrations and provisions the staged
-            // administrator before marking setup completed.
-            $process = new Process([PHP_BINARY, 'bin/console', 'symsvel:setup:finalize', '--no-interaction'], $backend);
+            // Phase 1 performs only database preparation and migrations.
+            $process = new Process([PHP_BINARY, 'bin/console', 'symsvel:setup:database', '--no-interaction'], $backend);
             $process->setTimeout(null);
             $process->run();
             if (!$process->isSuccessful()) {
-                $this->addFlash('setup_error', 'Finalisation impossible. Vérifiez PostgreSQL, les migrations et le module Admins, puis relancez le Setup.');
+                $this->addFlash('setup_error', 'Préparation de la base impossible. Vérifiez la connexion et les migrations, puis réessayez.');
                 return $this->redirectToRoute('symsvel_setup');
             }
-            return new Response('Installation SymSvel terminée.', Response::HTTP_OK);
+            return $this->redirectToRoute('symsvel_setup_admin');
         }
         return $this->render('setup/index.html.twig');
     }
+    #[Route('/setup/admin', name: 'symsvel_setup_admin', methods: ['GET', 'POST'])]
+    public function administrator(Request $request): Response
+    {
+        if (!in_array($request->getClientIp(), ['127.0.0.1', '::1'], true)) {
+            return new Response('Installation accessible uniquement en local.', Response::HTTP_FORBIDDEN);
+        }
+        $backend = (string) $this->getParameter('kernel.project_dir');
+        $workspace = dirname($backend);
+        $stateFile = $workspace.'/.symsvel/setup.json';
+        if (is_link($workspace.'/.symsvel') || is_link($stateFile) || !is_file($stateFile) || !is_readable($stateFile)) {
+            throw $this->createNotFoundException();
+        }
+        try {
+            $state = json_decode((string) file_get_contents($stateFile), true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            throw $this->createNotFoundException();
+        }
+        if (($state['schema'] ?? null) !== 1) {
+            throw $this->createNotFoundException();
+        }
+        if (($state['status'] ?? null) !== 'database_ready') {
+            return $this->redirectToRoute('symsvel_setup');
+        }
+        if ($request->isMethod('POST')) {
+            if (!$this->isCsrfTokenValid('symsvel_setup_admin', (string) $request->request->get('_token', ''))) {
+                return new Response('Requête invalide.', Response::HTTP_FORBIDDEN);
+            }
+            $action = (string) $request->request->get('setup_action', 'provision');
+            if ($action === 'provision') {
+                $email = (string) $request->request->get('admin_email', '');
+                $password = (string) $request->request->get('admin_password', '');
+                $confirmation = (string) $request->request->get('admin_password_confirmation', '');
+                if (!hash_equals($password, $confirmation)) {
+                    $this->addFlash('setup_error', 'Les mots de passe administrateur ne correspondent pas.');
+                    return $this->redirectToRoute('symsvel_setup_admin');
+                }
+                try {
+                    (new PendingAdministrator())->validate($email, $password);
+                } catch (\InvalidArgumentException $exception) {
+                    $this->addFlash('setup_error', $exception->getMessage());
+                    return $this->redirectToRoute('symsvel_setup_admin');
+                }
+                $process = new Process([PHP_BINARY, 'bin/console', 'symsvel:admins:bootstrap:stdin', '--no-interaction'], $backend);
+                $process->setInput(json_encode(['email' => trim($email), 'password' => $password], JSON_THROW_ON_ERROR));
+                $process->setTimeout(60);
+                $process->run();
+                if (!$process->isSuccessful()) {
+                    $this->addFlash('setup_error', 'Création du premier administrateur impossible. Vérifiez le module Admins et réessayez.');
+                    return $this->redirectToRoute('symsvel_setup_admin');
+                }
+            } elseif ($action !== 'complete') {
+                return new Response('Action de setup invalide.', Response::HTTP_BAD_REQUEST);
+            }
+            // Completion independently verifies the administrator and is safe to retry.
+            $complete = new Process([PHP_BINARY, 'bin/console', 'symsvel:setup:complete', '--no-interaction'], $backend);
+            $complete->setTimeout(null);
+            $complete->run();
+            if (!$complete->isSuccessful()) {
+                $this->addFlash('setup_error', 'Finalisation impossible. Les données sont conservées ; relancez uniquement la finalisation après correction du problème.');
+                return $this->redirectToRoute('symsvel_setup_admin');
+            }
+            return new Response('Installation SymSvel terminée.', Response::HTTP_OK);
+        }
+        return $this->render('setup/admin.html.twig');
+    }
+
 }

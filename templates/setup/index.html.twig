@@ -3,7 +3,7 @@
 {% block body %}
 <main style="max-width:42rem;margin:5rem auto;font:1rem system-ui,sans-serif;padding:1rem">
   <h1>Installation SymSvel</h1>
-  <p>Nommez le projet et configurez sa connexion PostgreSQL. Les migrations seront exécutées après validation.</p>
+  <p>Phase 1 sur 2 : configurez le projet et sa connexion PostgreSQL. La base et les migrations seront préparées avant la création du premier administrateur.</p>
   {% for message in app.flashes('setup_error') %}<p role="alert">{{ message }}</p>{% endfor %}
   <form method="post">
     <input type="hidden" name="_token" value="{{ csrf_token('symsvel_setup') }}">
@@ -25,17 +25,7 @@
       <label for="db_password">Mot de passe (facultatif)</label>
       <input id="db_password" name="db_password" type="password" autocomplete="new-password" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
     </fieldset>
-    <fieldset>
-      <legend>Premier administrateur</legend>
-      <p>Les identifiants sont préparés de manière sécurisée. Le compte sera créé après les migrations, lorsque le module Admins sera installé.</p>
-      <label for="admin_email">Adresse e-mail</label>
-      <input id="admin_email" name="admin_email" type="email" maxlength="254" required autocomplete="email" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
-      <label for="admin_password">Mot de passe (12 caractères minimum)</label>
-      <input id="admin_password" name="admin_password" type="password" minlength="12" required autocomplete="new-password" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
-      <label for="admin_password_confirmation">Confirmer le mot de passe</label>
-      <input id="admin_password_confirmation" name="admin_password_confirmation" type="password" minlength="12" required autocomplete="new-password" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
-    </fieldset>
-    <button type="submit">Vérifier et poursuivre l'installation</button>
+    <button type="submit">Préparer la base et poursuivre</button>
   </form>
 </main>
 {% endblock %}

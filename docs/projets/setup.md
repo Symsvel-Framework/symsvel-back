@@ -8,14 +8,36 @@ symsvel setup
 
 Cette commande permet de reprendre le Wizard après une interruption. La finalisation technique est déléguée à `symsvel setup:finalize` (commande Symfony `symsvel:setup:finalize`). Une interruption du formulaire n'implique pas que les changements déjà effectués dans la base aient été annulés.
 
-## Implémentation actuellement vérifiable
+## Périmètre de stabilisation PostgreSQL (novembre 2026)
 
-Le formulaire recueille le nom du projet, son domaine local, les paramètres de connexion PostgreSQL, l'adresse électronique et le mot de passe du premier administrateur. `DatabaseConnectionConfig` vérifie une connexion PostgreSQL et construit `DATABASE_URL` ; `SetupController` écrit la configuration dans `backend/.env.local`, prépare l'administrateur et exécute la finalisation.
+Le chantier en cours stabilise le Setup en deux phases **sur PostgreSQL uniquement**. La prise en charge de MySQL, MariaDB et SQLite, l'import i18n et la 2FA sont explicitement reportés à leurs chantiers respectifs. L'ADR 0008 décrit la cible multibase, pas les moteurs déjà opérationnels.
 
-Le Tooling initialise un état local et un jeton interne `.symsvel/setup-token` ; **l'utilisateur n'a pas à saisir un jeton de setup dans le formulaire**. Ce fichier technique doit rester privé et ne doit pas être versionné.
+### Parcours implémenté sur la branche de travail
 
-## Contrat cible et limites
+1. `symsvel create-project` prépare les composants et leurs dépendances ; les builds Svelte sont différés pendant l'installation initiale.
+2. `GET /setup` affiche le formulaire local : nom du projet, domaine local et paramètres PostgreSQL. Après validation CSRF, `DatabaseConnectionConfig` vérifie la connexion et détecte la version du serveur. `SetupController` écrit `backend/.env.local`, sauvegarde les métadonnées du projet puis appelle `symsvel:setup:database`.
+3. La commande Tooling crée la base si nécessaire, compile et exécute les migrations des modules Composer, puis passe l'état à `database_ready`. Un journal de récupération de migrations en attente bloque la poursuite.
+4. `GET /setup/admin` exige `database_ready`. Le formulaire crée directement le premier administrateur via `symsvel:admins:bootstrap:stdin` ; aucun `pending-admin.json` n'est créé par ce parcours.
+5. `symsvel:setup:complete` vérifie l'administrateur via `symsvel:admins:bootstrap:verify`, lance les builds statiques des composants présents (BO, App, Front) et passe l'état à `completed` uniquement après réussite. En cas d'échec, une action distincte permet de relancer la finalisation sans recréer l'administrateur.
 
-L'[ADR 0005](../adr/0005-installation-operationnelle.md) exige une distribution utilisable après setup, avec modules natifs et accès BO/App sécurisés. L'[ADR 0008](../adr/0008-donnees-et-migrations.md) prévoit PostgreSQL, MySQL, MariaDB et SQLite. **À ce stade, le formulaire Setup est spécifique à PostgreSQL.** Ne pas présenter les trois autres moteurs ni les parcours 2FA comme validés.
+Le Setup est réservé aux accès locaux ; les formulaires vérifient les jetons CSRF. Le fichier `.env.local` est écrit avec des permissions restrictives. Le champ `channel` des métadonnées du projet est préservé.
 
-Le parcours complet de création, configuration BDD, migrations, premier administrateur, authentification et reprise après erreur doit être testé sur XT. Ne jamais modifier artificiellement XT pour masquer un défaut du framework.
+### Validation et limites
+
+**État : implémentation en PR draft, CI individuelles vertes, pas encore validée en crash-test XT.** Les tests automatisés et CI ne remplacent pas la validation du parcours distribué après merge via `dev-main`. La reprise après échec, les permissions effectives sous PHP-FPM, la présence des commandes du module Admins et le fonctionnement complet du Setup doivent être vérifiés avant de considérer la stabilisation terminée.
+
+La commande historique `symsvel:setup:finalize` existe encore ; elle ne doit pas être confondue avec le nouveau parcours `symsvel:setup:database` puis `symsvel:setup:complete`. Le stockage historique d'administrateur temporaire reste dans le code mais n'est plus utilisé par ce parcours.
+
+La compatibilité multibase est hors périmètre de cette stabilisation. Les migrations initiales des modules natifs contiennent encore du SQL spécifique à PostgreSQL ; elles ne sont pas portables en l'état.
+
+## Audit multibase du 8 novembre 2026
+
+L'examen des sources actuelles confirme que la compilation de Tooling extrait et concatène les corps `up()` et `down()` des migrations Doctrine, sans interpréter ni convertir les appels `addSql()`. L'exécuteur lance ensuite `doctrine:migrations:execute` dans l'ordre, journalise les opérations et tente de compenser les migrations déjà terminées en cas d'échec. Le journal de récupération bloque les nouvelles opérations en cas d'incertitude. Le mécanisme de compilation/exécution doit être conservé.
+
+**Blocage concret :** les migrations initiales des modules natifs Admins, Roles, ACLs et Users utilisent `INT GENERATED BY DEFAULT AS IDENTITY`, `BOOLEAN DEFAULT TRUE/FALSE` et, pour Admins/Users, `TIMESTAMP(0) WITHOUT TIME ZONE` dans du SQL PostgreSQL. Le compilateur ne rend pas ce SQL portable. Activer les quatre choix dans le formulaire avant correction des sources donnerait des installations cassées.
+
+**Adaptation retenue pour le chantier :** garder le contrat de migrations natives et le compilateur unique, mais exprimer les créations de tables/index dans les sources initiales des modules via l'API `Doctrine\\DBAL\\Schema\\Schema` / `Table` / `Column` et conserver les insertions de données compatibles via `addSql`. Cette stratégie nécessite de vérifier le comportement de `Schema` dans les migrations compilées et le SQL réellement exécuté sur chaque moteur avant de modifier des migrations déjà publiées. Les migrations enregistrées sont immuables : toute migration déjà reçue doit rester reconnue par son empreinte, et une stratégie de compatibilité est obligatoire pour les installations existantes. Ne pas réécrire silencieusement les fichiers de migrations déjà distribués.
+
+La configuration `DatabaseConnectionConfig` et le formulaire Back restent PostgreSQL uniquement. Les extensions de connexion devront produire les URL Doctrine adaptées à PostgreSQL, MySQL, MariaDB et SQLite, avec détection de version pour les moteurs serveur et sans forcer une version pour SQLite. Le chemin SQLite doit être confiné au workspace ; les informations de connexion doivent rester dans `.env.local`. Les pilotes PDO nécessaires seront vérifiés explicitement et les tests de connexion et migrations devront être réalisés pour chaque moteur.
+
+**Validation requise avant activation du sélecteur :** tests unitaires des URL/validations, tests de compilation et d'immuabilité, tests d'intégration des migrations natives sur les quatre moteurs, reprise après erreur, puis crash-tests XT. Aucun moteur supplémentaire n'est déclaré fonctionnel à ce stade.
