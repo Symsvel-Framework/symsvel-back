@@ -49,3 +49,7 @@ Les mises à jour de maintenance sont locales et ne doivent pas être exécutée
 ### Diagnostic temporaire npm du Setup (09/11/2026)
 
 Pendant le crash-test local, le parcours Setup ajoute des traces dans `.symsvel/npm-trace.log` à la racine du workspace. Les étapes CLI, contrôleur et Tooling journalisent l'horodatage, le PID, le chemin npm et le PATH utiles au diagnostic ; Tooling journalise également la commande de build choisie et son code de sortie. Aucun secret ni environnement complet n'est journalisé. Ces traces sont temporaires, réservées au diagnostic local et doivent être retirées après identification de la cause. Ne pas publier ce journal.
+
+### Transmission de npm au Setup (09/11/2026)
+
+Le contrôleur local du Wizard transmet explicitement `SYMSVEL_SETUP_NPM` et `PATH` à son processus enfant `symsvel:setup:complete` via l'argument d'environnement de `Symfony\\Component\\Process\\Process`. Le Tooling utilise alors le chemin absolu de npm déjà détecté par la CLI. Cette transmission corrige le cas observé où `getenv()` renvoyait `false` dans le processus console alors que les valeurs étaient présentes dans le contrôleur. Aucun chemin npm propre à macOS/Homebrew n'est codé en dur. Le tracking temporaire `.symsvel/npm-trace.log` est conservé pour vérifier le prochain crash-test. L'état `database_ready` permet de relancer la finalisation sans recréer l'administrateur ni la base.
