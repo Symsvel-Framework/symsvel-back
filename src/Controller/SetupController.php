@@ -166,9 +166,15 @@ final class SetupController extends AbstractController
                 return new Response('Action de setup invalide.', Response::HTTP_BAD_REQUEST);
             }
             // Completion independently verifies the administrator and is safe to retry.
+            // Temporary setup diagnostic; only npm discovery and process metadata.
+            @file_put_contents($workspace.'/.symsvel/npm-trace.log',
+                gmdate('c').' [controller pid='.getmypid().'] npm='.var_export(getenv('SYMSVEL_SETUP_NPM'), true)
+                .' PATH='.var_export(getenv('PATH'), true)
+                .' php='.PHP_BINARY."\n", FILE_APPEND | LOCK_EX);
             $complete = new Process([PHP_BINARY, 'bin/console', 'symsvel:setup:complete', '--no-interaction'], $backend);
             $complete->setTimeout(null);
             $complete->run();
+            @file_put_contents($workspace.'/.symsvel/npm-trace.log', gmdate('c').' [controller pid='.getmypid().'] complete_exit='.var_export($complete->getExitCode(), true)."\n", FILE_APPEND | LOCK_EX);
             if (!$complete->isSuccessful()) {
                 // The wizard is loopback-only: expose the actual command failure so
                 // an installation can be diagnosed without a manual console retry.
