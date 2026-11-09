@@ -170,7 +170,10 @@ final class SetupController extends AbstractController
             $complete->setTimeout(null);
             $complete->run();
             if (!$complete->isSuccessful()) {
-                $this->addFlash('setup_error', 'Finalisation impossible. Les données sont conservées ; relancez uniquement la finalisation après correction du problème.');
+                // The wizard is loopback-only: expose the actual command failure so
+                // an installation can be diagnosed without a manual console retry.
+                $details = trim($complete->getErrorOutput()."\n".$complete->getOutput());
+                $this->addFlash('setup_error', 'Finalisation impossible. Les données sont conservées. '.($details !== '' ? $details : 'Commande interrompue sans diagnostic.'));
                 return $this->redirectToRoute('symsvel_setup_admin');
             }
             return new Response('Installation SymSvel terminée.', Response::HTTP_OK);

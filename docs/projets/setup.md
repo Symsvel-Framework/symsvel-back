@@ -41,3 +41,7 @@ L'examen des sources actuelles confirme que la compilation de Tooling extrait et
 La configuration `DatabaseConnectionConfig` et le formulaire Back restent PostgreSQL uniquement. Les extensions de connexion devront produire les URL Doctrine adaptées à PostgreSQL, MySQL, MariaDB et SQLite, avec détection de version pour les moteurs serveur et sans forcer une version pour SQLite. Le chemin SQLite doit être confiné au workspace ; les informations de connexion doivent rester dans `.env.local`. Les pilotes PDO nécessaires seront vérifiés explicitement et les tests de connexion et migrations devront être réalisés pour chaque moteur.
 
 **Validation requise avant activation du sélecteur :** tests unitaires des URL/validations, tests de compilation et d'immuabilité, tests d'intégration des migrations natives sur les quatre moteurs, reprise après erreur, puis crash-tests XT. Aucun moteur supplémentaire n'est déclaré fonctionnel à ce stade.
+
+### Diagnostic de la phase 2 (CT XT)
+
+La finalisation depuis `/setup/admin` lance `symsvel:setup:complete` comme sous-processus Symfony. En cas d'échec, le formulaire local affiche désormais la sortie de cette commande au lieu de masquer le diagnostic derrière un message générique. Le statut reste `database_ready` et la finalisation est relançable sans recréer le premier administrateur. Le succès de la commande en terminal ne valide pas le parcours navigateur : un CT XT complet reste obligatoire.
