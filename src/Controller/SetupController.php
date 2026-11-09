@@ -171,7 +171,16 @@ final class SetupController extends AbstractController
                 gmdate('c').' [controller pid='.getmypid().'] npm='.var_export(getenv('SYMSVEL_SETUP_NPM'), true)
                 .' PATH='.var_export(getenv('PATH'), true)
                 .' php='.PHP_BINARY."\n", FILE_APPEND | LOCK_EX);
-            $complete = new Process([PHP_BINARY, 'bin/console', 'symsvel:setup:complete', '--no-interaction'], $backend);
+            // Explicitly forward npm discovery to the console child: the web process
+            // can see these values even when its child does not inherit them.
+            $environment = [];
+            foreach (['SYMSVEL_SETUP_NPM', 'PATH'] as $name) {
+                $value = getenv($name);
+                if (is_string($value) && $value !== '') {
+                    $environment[$name] = $value;
+                }
+            }
+            $complete = new Process([PHP_BINARY, 'bin/console', 'symsvel:setup:complete', '--no-interaction'], $backend, $environment);
             $complete->setTimeout(null);
             $complete->run();
             @file_put_contents($workspace.'/.symsvel/npm-trace.log', gmdate('c').' [controller pid='.getmypid().'] complete_exit='.var_export($complete->getExitCode(), true)."\n", FILE_APPEND | LOCK_EX);
