@@ -9,6 +9,24 @@ use PHPUnit\Framework\TestCase;
 
 final class DatabaseConnectionConfigTest extends TestCase
 {
+    public function testBuildsSQLiteUrlWithoutServerVersion(): void
+    {
+        self::assertSame('sqlite:///%kernel.project_dir%/var/app.sqlite',
+            (new DatabaseConnectionConfig())->buildSelectedUrl('sqlite', '', '', '', '', '', 'var/app.sqlite'));
+    }
+
+    public function testRejectsUnsafeSQLitePath(): void
+    {
+        $this->expectException(\\InvalidArgumentException::class);
+        (new DatabaseConnectionConfig())->buildSelectedUrl('sqlite', '', '', '', '', '', '../secrets/config.sqlite');
+    }
+
+    public function testRejectsUnknownDatabaseEngine(): void
+    {
+        $this->expectException(\\InvalidArgumentException::class);
+        (new DatabaseConnectionConfig())->buildSelectedUrl('oracle', '', '', '', '', '');
+    }
+
     public function testBuildsPostgresqlUrlAndEncodesCredentials(): void
     {
         $url = (new DatabaseConnectionConfig())->buildUrl(' localhost ', '5432', 'my/database', ' user@name ', 'p@ss:/?#%');
