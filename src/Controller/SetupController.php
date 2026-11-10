@@ -68,7 +68,7 @@ final class SetupController extends AbstractController
                     (string) $request->request->get('db_name', ''),
                     (string) $request->request->get('db_user', ''),
                     (string) $request->request->get('db_password', ''),
-                    (string) $request->request->get('db_sqlite_path', 'var/data/app.sqlite'),
+                    (string) $request->request->get('db_sqlite_path', 'var/app.sqlite'),
                 );
             } catch (\InvalidArgumentException|\RuntimeException $exception) {
                 $this->addFlash('setup_error', $exception->getMessage());
