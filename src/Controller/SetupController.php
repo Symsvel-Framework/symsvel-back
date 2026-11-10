@@ -139,7 +139,7 @@ final class SetupController extends AbstractController
             $decoded = rawurldecode($password);
             $diagnostic = str_replace(array_unique([$password, $decoded]), '[mot de passe masqué]', $diagnostic);
         }
-        return mb_substr($diagnostic, 0, 4000);
+        return substr($diagnostic, 0, 4000);
     }
 
     #[Route('/setup/admin', name: 'symsvel_setup_admin', methods: ['GET', 'POST'])]
