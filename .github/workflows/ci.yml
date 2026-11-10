@@ -2,9 +2,16 @@ name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
+    branches: [main]
     types: [opened, synchronize, reopened]
   workflow_dispatch:
+
+# Avoid spending Actions minutes on obsolete commits of the same branch/PR.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
@@ -27,8 +34,9 @@ jobs:
           fi
           echo "::add-mask::$SYMSVEL_READ_TOKEN"
           composer config --global github-oauth.github.com "$SYMSVEL_READ_TOKEN"
-      - name: Validate Composer manifest and lockfile
-        run: composer validate --strict --no-check-publish
+      # Composer manifest validation is already part of `composer qa` below.
+      # - name: Validate Composer manifest and lockfile
+      #   run: composer validate --strict --no-check-publish
       - name: Install locked dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
       - name: Verify bundle registration and command
