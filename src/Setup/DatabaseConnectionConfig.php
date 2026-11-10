@@ -10,6 +10,48 @@ namespace App\Setup;
  */
 final class DatabaseConnectionConfig
 {
+    /** Build a Doctrine DBAL URL for the selected engine. */
+    public function buildSelectedUrl(string $driver, string $host, string $port, string $database, string $user, string $password, string $sqlitePath = ''): string
+    {
+        if ($driver === 'postgresql') {
+            return $this->buildVerifiedUrl($host, $port, $database, $user, $password);
+        }
+        if ($driver === 'sqlite') {
+            if ($sqlitePath === '' || str_contains($sqlitePath, "\\0") || str_contains($sqlitePath, "\\n") || str_contains($sqlitePath, "\\r") || str_contains($sqlitePath, '..') || str_starts_with($sqlitePath, '/') || !preg_match('~^[a-zA-Z0-9_./-]+$~D', $sqlitePath)) {
+                throw new \\InvalidArgumentException('Chemin SQLite invalide.');
+            }
+            return 'sqlite:///%kernel.project_dir%/'.ltrim($sqlitePath, '/');
+        }
+        if (!in_array($driver, ['mysql', 'mariadb'], true)) {
+            throw new \\InvalidArgumentException('SGBD non pris en charge.');
+        }
+        $host = trim($host);
+        $user = trim($user);
+        $database = trim($database);
+        if ($host === '' || strlen($host) > 253 || preg_match('/^[a-zA-Z0-9][a-zA-Z0-9.-]*$/D', $host) !== 1 || str_contains($host, '..')
+            || !ctype_digit($port) || (int) $port < 1 || (int) $port > 65535
+            || $user === '' || $database === '' || strlen($user) > 128 || strlen($database) > 128
+            || preg_match('/[\\x00-\\x1F\\x7F]/', $user.$database.$password) === 1) {
+            throw new \\InvalidArgumentException('Paramètres MySQL/MariaDB invalides.');
+        }
+        try {
+            $pdo = new \\PDO(sprintf('mysql:host=%s;port=%d;charset=utf8mb4', $host, (int) $port), $user, $password, [\\PDO::ATTR_ERRMODE => \\PDO::ERRMODE_EXCEPTION, \\PDO::ATTR_TIMEOUT => 5]);
+            $version = (string) $pdo->query('SELECT VERSION()')->fetchColumn();
+        } catch (\\PDOException $exception) {
+            throw new \\RuntimeException('Connexion MySQL/MariaDB impossible.', 0, $exception);
+        }
+        $isMaria = stripos($version, 'mariadb') !== false;
+        if (($driver === 'mariadb') !== $isMaria) {
+            throw new \\RuntimeException('Le serveur détecté ne correspond pas au SGBD sélectionné.');
+        }
+        if (!preg_match('/(\\d+\\.\\d+\\.\\d+)/', $version, $matches)) {
+            throw new \\RuntimeException('Version MySQL/MariaDB non reconnue.');
+        }
+        $serverVersion = ($isMaria ? 'mariadb-' : '').$matches[1];
+        $credentials = rawurlencode($user).($password === '' ? '' : ':'.rawurlencode($password));
+        return sprintf('mysql://%s@%s:%d/%s?serverVersion=%s&charset=utf8mb4', $credentials, $host, (int) $port, rawurlencode($database), rawurlencode($serverVersion));
+    }
+
     public function buildVerifiedUrl(string $host, string $port, string $database, string $user, string $password): string
     {
         $url = $this->buildUrl($host, $port, $database, $user, $password);
