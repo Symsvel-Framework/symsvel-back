@@ -59,3 +59,9 @@ Le contrôleur local du Wizard transmet explicitement `SYMSVEL_SETUP_NPM` et `PA
 Le Setup Wizard local écrit `backend/.env.local` de manière atomique avec le mode `0644`, afin que PHP-FPM puisse le lire lorsque le serveur HTTP utilise un autre compte que la CLI (ex. `_www` sur macOS). Ce fichier peut contenir des identifiants de base de données : réserver ce comportement à une machine de développement maîtrisée et éviter d'y placer des secrets de production. En production, le vrai `.env` est déposé dans `secrets/` puis copié vers `backend/` par la CD ; ses permissions relèvent du déploiement et non du Setup local.
 
 Régression CT : après la phase 1 du Setup, vérifier le mode de `.env.local` et un accès HTTP via PHP-FPM sous un compte distinct. Une CI verte ne valide pas à elle seule cette configuration locale.
+
+## Setup multi-SGBD (chantier en cours)
+
+La phase 1 du Wizard propose PostgreSQL, MySQL, MariaDB et SQLite. PostgreSQL détecte la version via `SHOW server_version_num`. MySQL/MariaDB détectent `SELECT VERSION()`, vérifient que le moteur correspond au choix et produisent un paramètre `serverVersion` Doctrine adapté (préfixe `mariadb-` pour MariaDB). SQLite utilise un fichier relatif au backend (`var/app.sqlite` par défaut), sans version serveur. Le fichier `backend/.env.local` est écrit atomiquement en mode `0644` dans l'environnement local.
+
+**Limite actuelle :** le Setup déclenche encore `symsvel:setup:database` après la configuration. Le compilateur et les migrations multi-SGBD ne sont pas validés et font l'objet d'un chantier séparé. Le parcours complet n'est donc pas encore certifié sur MySQL, MariaDB ou SQLite. Les pilotes PDO nécessaires doivent être installés.
