@@ -90,7 +90,11 @@ final class SetupController extends AbstractController
                 throw new \RuntimeException('Impossible de préparer la configuration.');
             }
             try {
-                chmod($temporary, 0600);
+                // Local Setup: PHP-FPM may run under a different user than the CLI.
+                // Production .env is supplied separately by CD from secrets/.
+                if (!chmod($temporary, 0644)) {
+                    throw new \RuntimeException('Impossible de rendre la configuration locale lisible par PHP-FPM.');
+                }
                 if (file_put_contents($temporary, $contents) === false || !rename($temporary, $envFile)) {
                     throw new \RuntimeException('Impossible d’enregistrer la configuration.');
                 }
