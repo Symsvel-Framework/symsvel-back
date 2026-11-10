@@ -111,13 +111,37 @@ final class SetupController extends AbstractController
             $process->setTimeout(null);
             $process->run();
             if (!$process->isSuccessful()) {
-                $this->addFlash('setup_error', 'Préparation de la base impossible. Vérifiez la connexion et les migrations, puis réessayez.');
+                // Preserve the failing command's diagnostic instead of collapsing
+                // connection, database creation and migration failures into one message.
+                $diagnostic = trim($process->getErrorOutput()."\\n".$process->getOutput());
+                $diagnostic = $this->sanitizeSetupDiagnostic($diagnostic, $url);
+                $this->addFlash('setup_error', 'Préparation de la base échouée (code '.($process->getExitCode() ?? 'inconnu').'). '.($diagnostic !== '' ? $diagnostic : 'La commande n’a fourni aucun diagnostic.'));
+
                 return $this->redirectToRoute('symsvel_setup');
             }
             return $this->redirectToRoute('symsvel_setup_admin');
         }
         return $this->render('setup/index.html.twig');
     }
+    /** Do not expose database credentials in local setup error messages. */
+    private function sanitizeSetupDiagnostic(string $diagnostic, string $databaseUrl): string
+    {
+        if ($diagnostic === '') {
+            return '';
+        }
+        // Remove the configured connection URL, including its encoded password.
+        $diagnostic = str_replace($databaseUrl, '[DATABASE_URL masquée]', $diagnostic);
+        // Also mask connection URLs which may have been normalized by Doctrine.
+        $diagnostic = preg_replace('~(?:postgres(?:ql)?|mysql|mariadb|sqlite)://[^\\s\\x22\\x27<>]+~i', '[URL BDD masquée]', $diagnostic) ?? '';
+        // Passwords may appear in PDO exception diagnostics in plain form.
+        $password = parse_url($databaseUrl, PHP_URL_PASS);
+        if (is_string($password) && $password !== '') {
+            $decoded = rawurldecode($password);
+            $diagnostic = str_replace(array_unique([$password, $decoded]), '[mot de passe masqué]', $diagnostic);
+        }
+        return mb_substr($diagnostic, 0, 4000);
+    }
+
     #[Route('/setup/admin', name: 'symsvel_setup_admin', methods: ['GET', 'POST'])]
     public function administrator(Request $request): Response
     {
