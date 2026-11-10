@@ -17,13 +17,13 @@ final class DatabaseConnectionConfigTest extends TestCase
 
     public function testRejectsUnsafeSQLitePath(): void
     {
-        $this->expectException(\\InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         (new DatabaseConnectionConfig())->buildSelectedUrl('sqlite', '', '', '', '', '', '../secrets/config.sqlite');
     }
 
     public function testRejectsUnknownDatabaseEngine(): void
     {
-        $this->expectException(\\InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         (new DatabaseConnectionConfig())->buildSelectedUrl('oracle', '', '', '', '', '');
     }
 
