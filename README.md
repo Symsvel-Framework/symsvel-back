@@ -53,3 +53,9 @@ Pendant le crash-test local, le parcours Setup ajoute des traces dans `.symsvel/
 ### Transmission de npm au Setup (09/11/2026)
 
 Le contrôleur local du Wizard transmet explicitement `SYMSVEL_SETUP_NPM` et `PATH` à son processus enfant `symsvel:setup:complete` via l'argument d'environnement de `Symfony\\Component\\Process\\Process`. Le Tooling utilise alors le chemin absolu de npm déjà détecté par la CLI. Cette transmission corrige le cas observé où `getenv()` renvoyait `false` dans le processus console alors que les valeurs étaient présentes dans le contrôleur. Aucun chemin npm propre à macOS/Homebrew n'est codé en dur. Le tracking temporaire `.symsvel/npm-trace.log` est conservé pour vérifier le prochain crash-test. L'état `database_ready` permet de relancer la finalisation sans recréer l'administrateur ni la base.
+
+## Permissions du Setup local
+
+Le Setup Wizard local écrit `backend/.env.local` de manière atomique avec le mode `0644`, afin que PHP-FPM puisse le lire lorsque le serveur HTTP utilise un autre compte que la CLI (ex. `_www` sur macOS). Ce fichier peut contenir des identifiants de base de données : réserver ce comportement à une machine de développement maîtrisée et éviter d'y placer des secrets de production. En production, le vrai `.env` est déposé dans `secrets/` puis copié vers `backend/` par la CD ; ses permissions relèvent du déploiement et non du Setup local.
+
+Régression CT : après la phase 1 du Setup, vérifier le mode de `.env.local` et un accès HTTP via PHP-FPM sous un compte distinct. Une CI verte ne valide pas à elle seule cette configuration locale.
