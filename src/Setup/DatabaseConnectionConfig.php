@@ -44,10 +44,12 @@ final class DatabaseConnectionConfig
         if (($driver === 'mariadb') !== $isMaria) {
             throw new \RuntimeException('Le serveur détecté ne correspond pas au SGBD sélectionné.');
         }
-        if (!preg_match('/(\d+\.\d+\.\d+)/', $version, $matches)) {
+        if (!preg_match_all('/(\d+\.\d+\.\d+)/', $version, $matches) || $matches[1] === []) {
             throw new \RuntimeException('Version MySQL/MariaDB non reconnue.');
         }
-        $serverVersion = ($isMaria ? 'mariadb-' : '').$matches[1];
+        // MariaDB may report the compatibility prefix 5.5.5-10.x.y-MariaDB.
+        $detectedVersion = $isMaria ? end($matches[1]) : $matches[1][0];
+        $serverVersion = ($isMaria ? 'mariadb-' : '').$detectedVersion;
         $credentials = rawurlencode($user).($password === '' ? '' : ':'.rawurlencode($password));
         return sprintf('mysql://%s@%s:%d/%s?serverVersion=%s&charset=utf8mb4', $credentials, $host, (int) $port, rawurlencode($database), rawurlencode($serverVersion));
     }
