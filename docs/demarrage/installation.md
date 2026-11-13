@@ -27,3 +27,9 @@ Le parcours utilisateur de référence est la CLI : ne pas utiliser l'ancien `AP
 Voir [le Setup](../projets/setup.md) et [la référence CLI](https://github.com/Symsvel-Framework/symsvel-cli/blob/feat/persist-project-channel/docs/reference/commandes.md).
 
 **Validation en attente :** GitHub/Satis, modules, migrations, builds, authentification et rollbacks sur XT.
+
+**Distribution stable et verrouillage Composer**
+
+Le squelette Back est distribué avec un composer.lock qui fixe les versions de Core et Tooling utilisées lors de la création d'un projet. Avant chaque release de Back, vérifier que ce verrouillage référence les releases stables validées. Une nouvelle release de Core ou Tooling ne met pas automatiquement à jour le lock de Back.
+
+La validation du canal stable nécessite une installation vierge via symsvel create-project, sans --dev.
