@@ -42,7 +42,7 @@
         "symfony/validator": "8.1.*",
         "symfony/web-link": "8.1.*",
         "symfony/yaml": "8.1.*",
-        "symsvel-framework/core": "^1.0",
+        "symsvel-framework/core": "^1.1",
         "twig/extra-bundle": "^2.12|^3.29",
         "twig/twig": "^2.12|^3.30"
     },
@@ -117,7 +117,7 @@
         "symfony/maker-bundle": "^1.68",
         "symfony/stopwatch": "8.1.*",
         "symfony/web-profiler-bundle": "8.1.*",
-        "symsvel-framework/tooling": "^1.0"
+        "symsvel-framework/tooling": "^1.1"
     },
     "repositories": [
         {
