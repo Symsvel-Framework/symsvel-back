@@ -37,7 +37,7 @@ symsvel setup
 
 Le Wizard local collecte les informations du projet, les paramètres PostgreSQL et les identifiants du premier administrateur. La finalisation applique les migrations et prépare l'administrateur. La configuration de connexion est écrite dans `backend/.env.local`. La création initiale ne doit pas exiger une base déjà configurée.
 
-Le manifeste `config/symsvel-native-modules.json` exige Admins, Roles et ACLs ; Users est requis lorsque App est installée. **Le Setup actuel vérifie une connexion PostgreSQL** : la prise en charge MySQL/MariaDB/SQLite dans le Wizard relève de l'objectif architectural, pas d'une fonctionnalité déjà démontrée. L'accès BO/App avec 2FA est un contrat cible à valider séparément ; ne pas le déduire de la seule réussite du formulaire Setup.
+Le manifeste `config/symsvel-native-modules.json` exige Admins, Roles, ACLs et Settings ; Users est requis lorsque App est installée. **Le Setup actuel vérifie une connexion PostgreSQL** : la prise en charge MySQL/MariaDB/SQLite dans le Wizard relève de l'objectif architectural, pas d'une fonctionnalité déjà démontrée. L'accès BO/App avec 2FA est un contrat cible à valider séparément ; ne pas le déduire de la seule réussite du formulaire Setup.
 
 Voir [le guide Setup](docs/projets/setup.md), [le cycle de vie](docs/architecture/cycle-de-vie.md) et [les ADR](docs/adr/README.md).
 
