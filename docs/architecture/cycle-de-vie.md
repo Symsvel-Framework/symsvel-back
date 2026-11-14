@@ -14,3 +14,9 @@
 La provenance des packages et des composants est indépendante de `APP_ENV` ; elle est enregistrée à la création du projet. Les opérations Composer et les mises à jour natives des composants suivent des mécanismes différents. Les crash-tests XT valideront l'ensemble avant clôture des PR en cours.
 
 Voir [l'ADR d'installation](../adr/0005-installation-operationnelle.md), [l'ADR des données](../adr/0008-donnees-et-migrations.md) et [le Setup](../projets/setup.md).
+
+## Ordre des scripts Composer et inventaire de propriété
+
+Lors d'un `composer require`, `update` ou `remove`, Composer modifie `vendor/` avant d'exécuter les scripts `post-install-cmd` / `post-update-cmd`. Le script autonome `scripts/symsvel-module-precache.php` doit donc précéder `@auto-scripts` : il vérifie les modules installés et republie `.symsvel/bundles.php` puis `.symsvel/modules.json` depuis les métadonnées Composer, sans démarrer le kernel Symfony. `cache:clear` peut ensuite compiler le conteneur Settings avec les chemins des modules réellement présents. Le script historique `symsvel-module-sync.php` reste exécuté après les auto-scripts pour la synchronisation complète et les builds Svelte.
+
+Le contrôle de propriété de Settings reste strict : aucun chemin manquant ou fournisseur sans propriétaire vérifié n'est toléré. Le rollback global de Tooling couvre ces écritures dans la transaction. Le parcours réel de suppression Mails sur XT et les CI doivent encore être validés avant de déclarer le correctif terminé.
