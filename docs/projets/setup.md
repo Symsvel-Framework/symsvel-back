@@ -56,4 +56,4 @@ Les crash-tests d'installation sur le workspace XT vierge ont abouti avec **Post
 
 ### Origines CORS locales
 
-À la première phase, le Setup inscrit aussi `SYMSVEL_CORS_ALLOW_ORIGIN` dans `backend/.env.local` à partir du domaine local validé. La regex autorise uniquement les origines `bo.<domaine>`, `app.<domaine>` et `front.<domaine>` en HTTP ou HTTPS, avec port optionnel pour les serveurs de développement. Le Setup remplace l'ancienne valeur de cette variable sans la dupliquer lors d'une reprise. La politique CORS de production doit être définie séparément.
+À la première phase, le Setup inscrit aussi `SYMSVEL_CORS_ALLOW_ORIGIN` dans `backend/.env.local` à partir du domaine local validé. La regex autorise uniquement les origines `<domaine>`, `www.<domaine>`, `bo.<domaine>` et `app.<domaine>` en HTTP ou HTTPS, avec port optionnel pour les serveurs de développement. Le Setup remplace l'ancienne valeur de cette variable sans la dupliquer lors d'une reprise. La politique CORS de production doit être définie séparément.
