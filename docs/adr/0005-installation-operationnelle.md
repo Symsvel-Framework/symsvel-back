@@ -15,7 +15,7 @@ L’installation doit aboutir à une application exploitable, pas à un squelett
 - Après setup, l’administrateur accède au BO avec 2FA.
 - Avec App, inscription et connexion utilisateur avec 2FA.
 - Avec Front, page initiale accessible.
-- Modules natifs requis : Admins, Roles, ACLs ; Users si App est installée, y compris ultérieurement.
+- Modules natifs requis : Admins, Roles, ACLs, Settings et Auth (y compris en BO seul) ; Users si App est installée, y compris ultérieurement. Auth est installé par le manifeste du Back lors de `create-project`, avant le Setup Wizard. La 2FA est distincte et optionnelle ; son activation n'est pas une condition de disponibilité de l'authentification.
 - Chaque module fournit ses pages et processus selon ses scopes.
 
 ## Justification
