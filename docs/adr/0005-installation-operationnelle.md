@@ -12,8 +12,8 @@ L’installation doit aboutir à une application exploitable, pas à un squelett
 - Le BO est obligatoire ; App et Front sont optionnels.
 - `create-project` prépare le projet sans base obligatoire.
 - `setup` configure la base, le projet et le premier administrateur.
-- Après setup, l’administrateur accède au BO avec 2FA.
-- Avec App, inscription et connexion utilisateur avec 2FA.
+- Après setup, l’administrateur accède au BO via Auth ; une 2FA peut être ajoutée via un module indépendant.
+- Avec App, inscription et connexion utilisateur via Auth ; la 2FA reste optionnelle et indépendante.
 - Avec Front, page initiale accessible.
 - Modules natifs requis : Admins, Roles, ACLs, Settings et Auth (y compris en BO seul) ; Users si App est installée, y compris ultérieurement. Auth est installé par le manifeste du Back lors de `create-project`, avant le Setup Wizard. La 2FA est distincte et optionnelle ; son activation n'est pas une condition de disponibilité de l'authentification.
 - Chaque module fournit ses pages et processus selon ses scopes.
