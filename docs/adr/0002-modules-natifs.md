@@ -15,7 +15,7 @@ Exemple de périmètre minimal envisagé pour Users : nom, prénom, email, mot d
 
 Les extensions doivent privilégier les mécanismes existants de Symfony et Svelte lorsque cela répond au besoin. Aucun catalogue massif de hooks préventifs : un hook répond à un cas d'extension identifié.
 
-Settings rejoint les modules natifs obligatoires (Admins, Roles et ACLs). Il fournit le stockage de paramètres applicatifs déclarés par les modules, sans transporter de logique métier ou de configuration d'infrastructure dans Back/Core. Users reste requis uniquement lorsque App est activée. La déclaration d'un module obligatoire ne valide pas à elle seule son installation, sa migration ni son fonctionnement multi-SGBD.
+Auth rejoint les modules natifs obligatoires avec Admins, Roles, ACLs et Settings : le BO étant systématiquement présent, son authentification doit être disponible dès l'installation. Le module Auth est partagé par les contextes BO et App, sans rendre App obligatoire. La 2FA reste une fonctionnalité distincte et optionnelle. Settings rejoint les modules natifs obligatoires (Admins, Roles et ACLs). Il fournit le stockage de paramètres applicatifs déclarés par les modules, sans transporter de logique métier ou de configuration d'infrastructure dans Back/Core. Users reste requis uniquement lorsque App est activée. La déclaration d'un module obligatoire ne valide pas à elle seule son installation, sa migration ni son fonctionnement multi-SGBD.
 
 ## Conséquences
 
