@@ -12,10 +12,10 @@ final class LocalCorsOriginsTest extends TestCase
     public function testAllowsOnlyLocalSvelteOrigins(): void
     {
         $regex = '~'.(new LocalCorsOrigins())->fromDomain('xt.local').'~D';
-        foreach (['http://bo.xt.local', 'http://app.xt.local', 'http://front.xt.local', 'https://bo.xt.local', 'http://bo.xt.local:5173'] as $origin) {
+        foreach (['http://bo.xt.local', 'http://app.xt.local', 'http://xt.local', 'http://www.xt.local', 'https://www.xt.local', 'https://bo.xt.local', 'http://bo.xt.local:5173'] as $origin) {
             self::assertSame(1, preg_match($regex, $origin), $origin);
         }
-        foreach (['http://backend.xt.local', 'http://evil.xt.local', 'http://bo.xt.local.evil.org', 'https://bo-xt.local', 'http://boXxt.local'] as $origin) {
+        foreach (['http://front.xt.local', 'http://backend.xt.local', 'http://evil.xt.local', 'http://bo.xt.local.evil.org', 'https://bo-xt.local', 'http://boXxt.local'] as $origin) {
             self::assertSame(0, preg_match($regex, $origin), $origin);
         }
     }
