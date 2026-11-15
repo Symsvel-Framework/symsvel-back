@@ -4,7 +4,8 @@
     "symsvel-framework/module-admins",
     "symsvel-framework/module-roles",
     "symsvel-framework/module-acls",
-    "symsvel-framework/module-settings"
+    "symsvel-framework/module-settings",
+    "symsvel-framework/module-auth"
   ],
   "components": {
     "app": [
