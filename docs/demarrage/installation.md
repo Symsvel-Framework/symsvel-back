@@ -20,7 +20,7 @@ Le canal `stable` (par défaut) ou `dev` est conservé dans `backend/.symsvel/pr
 symsvel setup
 ```
 
-Le Wizard actuel configure PostgreSQL, le projet et le premier administrateur. Les modules natifs requis par le manifeste du Back sont Admins, Roles, ACLs et Settings, ainsi que Users lorsque App est présente. Les moteurs MySQL, MariaDB et SQLite sont prévus par l'architecture mais **ne sont pas proposés par l'implémentation actuelle du formulaire**.
+Le Wizard actuel configure PostgreSQL, le projet et le premier administrateur. Les modules natifs requis par le manifeste du Back sont Admins, Roles, ACLs, Settings et Auth, ainsi que Users lorsque App est présente. Auth est installé automatiquement par la CLI pendant `create-project` pour toutes les variantes, y compris `--components=bo` ; la 2FA est indépendante et optionnelle. Les moteurs MySQL, MariaDB et SQLite sont prévus par l'architecture mais **ne sont pas proposés par l'implémentation actuelle du formulaire**.
 
 Le parcours utilisateur de référence est la CLI : ne pas utiliser l'ancien `APP_ENV=core` ni considérer `php bin/console symsvel:install` comme le remplacement de `create-project`. Le code du Tooling conserve cette commande Symfony pour des usages internes.
 
