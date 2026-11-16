@@ -65,3 +65,33 @@ Lors de l'installation vierge `symsvel create-project --components=all --dev`, C
 ## Indicateur de mot de passe au bootstrap local (16/11/2026)
 
 La seconde phase du Setup montre une jauge de diversité sur le mot de passe du premier administrateur et vérifie côté navigateur les limites **déjà appliquées côté PHP** : de 12 à 1024 octets UTF-8 sans caractère NUL et double saisie identique. Les majuscules, chiffres et symboles enrichissent seulement l'indicateur et ne deviennent pas des obligations supplémentaires. L'attribut HTML `minlength` est retiré car il compte les caractères, contrairement à la validation PHP en octets. Aucun secret n'est enregistré ou transmis par la jauge, aucune modification du flux serveur, ni du contrat du Setup. CI et nouveau crash-test local requis.
+
+
+## Transports d'e-mails déclaratifs et tests locaux (16/11/2026)
+
+Le squelette Back définit les transports nommés Symfony Mailer
+`smtp` (`MAILER_DSN`), `mailpit` (SMTP local `127.0.0.1:1025`),
+`mailhog` (même port local, alternatif), `smtp4dev`
+(`127.0.0.1:25`) et `mailtrap` (`MAILTRAP_DSN`). Mails propose
+les choix dans Settings et place l'en-tête `X-Transport` sur chaque
+message pour que Symfony sélectionne **un seul** transport. Aucun
+changement de `.env.local` n'est effectué depuis les requêtes HTTP.
+
+**Pas de détection ni d'installation :** ces transports sont proposés
+même si les exécutables/serveurs ne sont pas présents. Le développeur
+doit les installer, les lancer et adapter les DSN ou ports lorsque
+nécessaire. La présence dans le dropdown ne garantit ni disponibilité
+ni réussite d'un envoi. Mailtrap nécessite les identifiants de la
+sandbox hébergée ; l'exemple `.env` ne comporte **aucun secret** et
+ne fonctionnera pas sans configuration. Pour les tests isolés, Mailpit
+et MailHog n'exigent aucun compte externe.
+
+Les transports externes supplémentaires pourront être fournis par des
+modules possédant leur propre configuration Symfony nommée ; le
+registre Mails ne scanne aucun service réseau et n'a pas d'autorisation
+pour modifier les fichiers d'environnement à l'exécution.
+
+QA : vérifier les cinq noms dans `mailer.yaml`, le routage
+`X-Transport` et l'absence de fallback. Crash-test XT : le développeur
+lance manuellement le serveur mail de son choix et vérifie qu'un vrai
+mail y arrive ; les CI ne simulent pas son installation.
