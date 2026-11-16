@@ -8,4 +8,11 @@ nelmio_cors:
         allow_credentials: false
     paths:
         '^/api(?:/|$)': ~
+        # Only the BO browser refresh transport may receive cross-origin cookies.
+        # The Auth controller independently validates the exact HTTPS BO Origin.
+        '^/apibo/auth/browser(?:/|$)':
+            allow_methods: ['POST', 'OPTIONS']
+            allow_headers: ['Content-Type']
+            allow_credentials: true
+            max_age: 600
         '^/apibo(?:/|$)': ~
