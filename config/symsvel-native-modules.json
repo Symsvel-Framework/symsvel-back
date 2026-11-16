@@ -5,6 +5,7 @@
     "symsvel-framework/module-roles",
     "symsvel-framework/module-acls",
     "symsvel-framework/module-settings",
+    "symsvel-framework/module-mails",
     "symsvel-framework/module-auth"
   ],
   "components": {

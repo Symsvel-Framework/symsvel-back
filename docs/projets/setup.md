@@ -57,3 +57,7 @@ Les crash-tests d'installation sur le workspace XT vierge ont abouti avec **Post
 ### Origines CORS locales
 
 À la première phase, le Setup inscrit aussi `SYMSVEL_CORS_ALLOW_ORIGIN` dans `backend/.env.local` à partir du domaine local validé. La regex autorise uniquement les origines `<domaine>`, `www.<domaine>`, `bo.<domaine>` et `app.<domaine>` en HTTP ou HTTPS, avec port optionnel pour les serveurs de développement. Le Setup remplace l'ancienne valeur de cette variable sans la dupliquer lors d'une reprise. La politique CORS de production doit être définie séparément.
+
+## CT XT : résolution des dépendances Mails en canal dev (16/11/2026)
+
+Lors de l'installation vierge `symsvel create-project --components=all --dev`, Composer rejetait `symsvel-framework/module-mails:dev-dev` comme dépendance transitive d'Admins, Auth et Users, car `minimum-stability: stable` est conservé dans le squelette. Le manifeste `config/symsvel-native-modules.json` demande désormais **Mails directement** parmi les modules natifs de tout projet, y compris BO seul. La CLI et le Tooling existants l'installent dans la même transaction que les autres modules avec la contrainte explicite `dev-dev` en canal de développement ; les dépôts VCS sont configurés dans le checkpoint transactionnel. Aucune ouverture générale à la stabilité `dev` et aucune manipulation manuelle du `composer.json` de XT ne sont nécessaires. Le test `NativeModulesManifestTest` protège cette présence ; la résolution Composer réelle reste à confirmer par le CT utilisateur puis les CI.
