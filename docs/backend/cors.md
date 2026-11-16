@@ -26,3 +26,11 @@ CT requis : navigateur sur HTTPS, réponse `Access-Control-Allow-Credentials: tr
 ### Exception de développement local (16/11/2026)
 
 Lorsque le BO et le backend sont tous les deux en HTTP local et que le Setup a enregistré un domaine réservé (*.localhost, *.local ou *.test), le module Auth accepte exclusivement l'origine http://bo.<local_domain> en environnement Symfony dev (port de développement facultatif). Le cookie de renouvellement est alors `symsvel-bo-refresh-local`, `HttpOnly`, `SameSite=Strict`, sans attribut `Secure` ni `Domain`. En HTTPS, le cookie normal `__Host-symsvel-bo-refresh` demeure `Secure` et host-only. Cette exception n'existe **jamais** en production ni sur les domaines publics, et ne change pas la restriction CORS qui demeure propre à `/apibo/auth/browser`.
+
+## Configuration runtime du domaine BO (16/11/2026)
+
+Le Setup continue de conserver le domaine du projet dans le fichier privé `<workspace>/.symsvel/project.json`, qui appartient à la CLI (permissions restreintes). Les processus web ne doivent **jamais** lire ce fichier. Lors de la configuration initiale, `SetupController` publie désormais `SYMSVEL_BO_DOMAIN="<local_domain>"` dans `backend/.env.local`, en plus de `DATABASE_URL` et `SYMSVEL_CORS_ALLOW_ORIGIN`. Le domaine est préalablement validé par `ProjectMetadata::validateLocalDomain()` et normalisé en minuscules. Il ne contient aucun secret ni origine issue des en-têtes HTTP.
+
+`Auth/TrustedBoOrigin` consomme cette variable de configuration Symfony pour vérifier strictement l'en-tête `Origin` du navigateur BO. Le paramètre `SYMSVEL_BO_ORIGIN` reste un override HTTPS exact pour les déploiements personnalisés. Le CORS général ne suffit pas à autoriser une opération sensible : Auth doit valider l'origine sur ses trois endpoints navigateur.
+
+Pour un projet XT déjà initialisé avant cet ajout, le Tooling actualisé publie la même variable pendant `symsvel:module:sync --source=composer`, qui est invoqué via `symsvel update`. Il conserve les autres variables, les permissions existantes de `.env.local` et le caractère privé du répertoire CLI. Le CT doit confirmer la connexion et le renouvellement de session depuis un navigateur réellement servi par PHP-FPM/Apache sous son utilisateur propre, puis le refus des origines étrangères.

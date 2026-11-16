@@ -85,9 +85,11 @@ final class SetupController extends AbstractController
             }
             $existing = is_file($envFile) ? (string) file_get_contents($envFile) : '';
             $lines = preg_split('/\r\n|\n|\r/', $existing) ?: [];
-            $lines = array_values(array_filter($lines, static fn (string $line): bool => preg_match('/^\s*(?:DATABASE_URL|SYMSVEL_CORS_ALLOW_ORIGIN)\s*=/', $line) !== 1));
+            $lines = array_values(array_filter($lines, static fn (string $line): bool => preg_match('/^\s*(?:DATABASE_URL|SYMSVEL_CORS_ALLOW_ORIGIN|SYMSVEL_BO_DOMAIN)\s*=/', $line) !== 1));
             $lines[] = 'DATABASE_URL='.json_encode($url, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
             $lines[] = 'SYMSVEL_CORS_ALLOW_ORIGIN='.json_encode((new LocalCorsOrigins())->fromDomain($localDomain), JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
+            // This public hostname must be readable by PHP-FPM, unlike private CLI Setup metadata.
+            $lines[] = 'SYMSVEL_BO_DOMAIN='.json_encode(strtolower(trim($localDomain)), JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
             $contents = implode("\n", $lines)."\n";
             $temporary = tempnam($backend, '.env-local-');
             if ($temporary === false) {
