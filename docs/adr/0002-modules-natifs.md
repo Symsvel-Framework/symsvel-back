@@ -23,3 +23,15 @@ Auth rejoint les modules natifs obligatoires avec Admins, Roles, ACLs et Setting
 - Les modules natifs restent légers et faciles à adopter.
 - On évite à la fois le module monolithique et la multiplication artificielle de micro-modules.
 - On ne crée pas des dizaines de hooks pour personnaliser un détail d'interface.
+
+
+## Languages : module natif obligatoire (16/11/2026)
+
+Languages rejoint la liste des modules obligatoires de chaque
+distribution, BO seul compris. Le référentiel des langues, ses
+statuts, les traductions de noms et sa sélection lors du Setup
+appartiennent à ce module, pas à Back ni Core. Le Setup appelle
+un point d'entrée CLI spécifique du module pour initialiser la
+langue principale sans importer sa logique métier. Le statut
+de migration et les essais multibase doivent être validés avant
+publication stable.

@@ -20,6 +20,7 @@ final class NativeModulesManifestTest extends TestCase
         self::assertContains('symsvel-framework/module-acls', $manifest['modules']);
         self::assertContains('symsvel-framework/module-settings', $manifest['modules']);
         self::assertContains('symsvel-framework/module-mails', $manifest['modules']);
+        self::assertContains('symsvel-framework/module-languages', $manifest['modules']);
         self::assertNotContains('symsvel-framework/module-users', $manifest['modules']);
         self::assertContains('symsvel-framework/module-users', $manifest['components']['app']);
         self::assertSame(count($manifest['modules']), count(array_unique($manifest['modules'])));

@@ -188,6 +188,22 @@ final class SetupController extends AbstractController
                     $this->addFlash('setup_error', $exception->getMessage());
                     return $this->redirectToRoute('symsvel_setup_admin');
                 }
+                $primaryLanguage = strtolower(trim((string) $request->request->get('primary_language', '')));
+                if (!preg_match('/^[a-z]{2,4}$/D', $primaryLanguage)) {
+                    $this->addFlash('setup_error', 'Choisissez une langue principale dans le référentiel.');
+                    return $this->redirectToRoute('symsvel_setup_admin');
+                }
+                // The native Languages module owns validation and the immutable
+                // selection; Back merely delegates to the local CLI command.
+                $language = new Process([PHP_BINARY, 'bin/console', 'symsvel:languages:bootstrap:stdin', '--no-interaction'], $backend);
+                $language->setInput(json_encode(['language' => $primaryLanguage], JSON_THROW_ON_ERROR));
+                $language->setTimeout(60);
+                $language->run();
+                if (!$language->isSuccessful()) {
+                    $this->addFlash('setup_error', 'Impossible de configurer la langue principale. Vérifiez que Languages est installé et que la langue est disponible.');
+                    return $this->redirectToRoute('symsvel_setup_admin');
+                }
+
                 $process = new Process([PHP_BINARY, 'bin/console', 'symsvel:admins:bootstrap:stdin', '--no-interaction'], $backend);
                 $process->setInput(json_encode(['email' => trim($email), 'password' => $password], JSON_THROW_ON_ERROR));
                 $process->setTimeout(60);

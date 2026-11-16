@@ -8,6 +8,12 @@
   <form method="post">
     <input type="hidden" name="_token" value="{{ csrf_token('symsvel_setup_admin') }}">
     <input type="hidden" name="setup_action" value="provision">
+    <label for="primary_language">Langue principale du projet (définitive)</label>
+    <select id="primary_language" name="primary_language" required disabled
+      style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
+      <option value="">Chargement du référentiel…</option>
+    </select>
+    <p id="primary_language_status" role="status">Choisissez explicitement une langue. Aucun choix n'est présélectionné.</p>
     <label for="admin_email">Adresse e-mail</label>
     <input id="admin_email" name="admin_email" type="email" maxlength="254" required autocomplete="email" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
     <label for="admin_password">Mot de passe (12 à 1024 octets UTF-8)</label>
@@ -36,6 +42,32 @@
   const meter = document.getElementById('admin-password-strength');
   const hint = document.getElementById('admin-password-hint');
   const form = password.closest('form');
+  const primaryLanguage = document.getElementById('primary_language');
+  const languageStatus = document.getElementById('primary_language_status');
+  fetch('{{ path('symsvel_languages_setup_choices') }}', {
+    credentials: 'same-origin', headers: { Accept: 'application/json' }
+  }).then(async (response) => {
+    if (!response.ok) throw new Error('Languages unavailable');
+    const payload = await response.json();
+    const data = Array.isArray(payload.data) ? payload.data : [];
+    if (data.length === 0) throw new Error('No languages');
+    primaryLanguage.replaceChildren();
+    const initial = document.createElement('option');
+    initial.value = '';
+    initial.textContent = 'Choisir la langue principale…';
+    primaryLanguage.append(initial);
+    for (const language of data) {
+      if (typeof language.iso_code !== 'string' || typeof language.name !== 'string') continue;
+      const option = document.createElement('option');
+      option.value = language.iso_code;
+      option.textContent = language.name + ' (' + language.iso_code + ')';
+      primaryLanguage.append(option);
+    }
+    primaryLanguage.disabled = false;
+    languageStatus.textContent = 'Ce choix sera conservé après le Setup et ne pourra plus être modifié.';
+  }).catch(() => {
+    languageStatus.textContent = 'Référentiel des langues indisponible. Vérifiez les migrations du module Languages et actualisez la page.';
+  });
   const valid = (value) => {
     const count = new TextEncoder().encode(value).length;
     return count >= 12 && count <= 1024 && !value.includes('\0');
@@ -54,7 +86,10 @@
   };
   password.addEventListener('input', update);
   form.addEventListener('submit', (event) => {
-    if (!valid(password.value)) {
+    if (!primaryLanguage.value) {
+      event.preventDefault();
+      primaryLanguage.reportValidity();
+    } else if (!valid(password.value)) {
       event.preventDefault();
       password.setCustomValidity('Le mot de passe doit contenir entre 12 et 1024 octets UTF-8, sans caractère nul.');
       password.reportValidity();

@@ -6,7 +6,8 @@
     "symsvel-framework/module-acls",
     "symsvel-framework/module-settings",
     "symsvel-framework/module-mails",
-    "symsvel-framework/module-auth"
+    "symsvel-framework/module-auth",
+    "symsvel-framework/module-languages"
   ],
   "components": {
     "app": [

@@ -95,3 +95,31 @@ QA : vérifier les cinq noms dans `mailer.yaml`, le routage
 `X-Transport` et l'absence de fallback. Crash-test XT : le développeur
 lance manuellement le serveur mail de son choix et vérifie qu'un vrai
 mail y arrive ; les CI ne simulent pas son installation.
+
+
+## Choix obligatoire de la langue principale (16/11/2026)
+
+Languages est un module natif de **tous** les projets, y compris
+BO seul ; il rejoint les dépendances racine
+`config/symsvel-native-modules.json`. Ses migrations Doctrine Schema
+créent `symsvel_languages`, puis y insèrent 117 langues aux deux états
+désactivés. En phase 2, le Setup demande explicitement la langue
+principale **avant** de créer le premier administrateur. Aucune langue
+n'est présélectionnée.
+
+Le formulaire récupère les noms natifs par
+`GET /setup/languages`, endpoint du module strictement réservé
+au loopback et à l'état `database_ready`. La sélection est soumise
+au serveur, qui délègue à
+`symsvel:languages:bootstrap:stdin` (commande du module) pour
+vérifier le code, enregistrer la langue principale dans Settings,
+initialiser `languages.multilingual=0` et activer la langue choisie.
+Un échec empêche la création du premier administrateur. En cas de
+reprise, le même choix est idempotent ; un autre code est refusé.
+
+La langue principale est protégée des modifications BO par sa
+définition Settings `editable:false` et par le contrat métier
+du module. `SYMSVEL_BO_DOMAIN` et les paramètres de connexion restent
+inchangés. Les crash-tests d'installation et de reprise doivent
+vérifier que les modules obligatoires sont résolus en `--dev` et
+que le formulaire trouve bien les routes de Languages après migrations.

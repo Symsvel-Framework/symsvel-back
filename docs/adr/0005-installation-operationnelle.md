@@ -33,3 +33,15 @@ Auth (et Admins/Users) dépend de Mails. Le manifeste du Back demande donc expli
 ## Validation technique restante
 
 Valider dans les crash-tests les quatre combinaisons bo/app/front/all et l’ajout différé d’App.
+
+
+## Native Languages et phase 2 (16/11/2026)
+
+La phase 1 installe et migre Languages en même temps que les autres
+modules natifs. La phase 2 demande la langue principale, non
+présélectionnée, puis le premier administrateur. Le moteur
+d'initialisation de la langue est dans Languages ; Setup appelle
+sa commande console par entrée standard locale. La sélection
+est définitive et la langue choisie reste active.
+Le multilinguisme public demeure désactivé tant qu'il n'a pas été
+activé dans Settings. Le test de démarrage complet reste exigé.
