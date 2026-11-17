@@ -7,6 +7,7 @@
     "symsvel-framework/module-settings",
     "symsvel-framework/module-mails",
     "symsvel-framework/module-auth",
+    "symsvel-framework/module-two-factor",
     "symsvel-framework/module-languages"
   ],
   "components": {
