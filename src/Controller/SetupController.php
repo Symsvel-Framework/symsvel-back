@@ -189,7 +189,15 @@ final class SetupController extends AbstractController
                     return $this->redirectToRoute('symsvel_setup_admin');
                 }
                 $process = new Process([PHP_BINARY, 'bin/console', 'symsvel:admins:bootstrap:stdin', '--no-interaction'], $backend);
-                $process->setInput(json_encode(['email' => trim($email), 'password' => $password], JSON_THROW_ON_ERROR));
+                // The developer's interface language comes directly from the browser,
+                // never from the not-yet-initialized Languages database catalog.
+                $browserLanguage = strtolower(explode('-', str_replace('_', '-',
+                    (string) ($request->getPreferredLanguage() ?? 'en')))[0]);
+                if (preg_match('/^[a-z]{2,4}$/D', $browserLanguage) !== 1) {
+                    $browserLanguage = 'en';
+                }
+                $process->setInput(json_encode(['email' => trim($email), 'password' => $password,
+                    'language' => $browserLanguage], JSON_THROW_ON_ERROR));
                 $process->setTimeout(60);
                 $process->run();
                 if (!$process->isSuccessful()) {
