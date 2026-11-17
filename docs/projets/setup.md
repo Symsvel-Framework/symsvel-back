@@ -97,29 +97,12 @@ lance manuellement le serveur mail de son choix et vérifie qu'un vrai
 mail y arrive ; les CI ne simulent pas son installation.
 
 
-## Choix obligatoire de la langue principale (16/11/2026)
+## Rectification du Setup des langues (17/11/2026)
 
-Languages est un module natif de **tous** les projets, y compris
-BO seul ; il rejoint les dépendances racine
-`config/symsvel-native-modules.json`. Ses migrations Doctrine Schema
-créent `symsvel_languages`, puis y insèrent 117 langues aux deux états
-désactivés. En phase 2, le Setup demande explicitement la langue
-principale **avant** de créer le premier administrateur. Aucune langue
-n'est présélectionnée.
+Le choix obligatoire de langue principale ajouté le 16/11 a été retiré du Wizard : il confondait la préférence linguistique du premier administrateur avec la langue principale du projet. Le Setup ne doit pas lire le référentiel Languages en base pour afficher le formulaire du premier administrateur. Le formulaire ne sollicite plus `symsvel_languages_setup_choices`, ne contient plus de sélection de langue principale et n'appelle plus `symsvel:languages:bootstrap:stdin` avant le bootstrap Admins.
 
-Le formulaire récupère les noms natifs par
-`GET /setup/languages`, endpoint du module strictement réservé
-au loopback et à l'état `database_ready`. La sélection est soumise
-au serveur, qui délègue à
-`symsvel:languages:bootstrap:stdin` (commande du module) pour
-vérifier le code, enregistrer la langue principale dans Settings,
-initialiser `languages.multilingual=0` et activer la langue choisie.
-Un échec empêche la création du premier administrateur. En cas de
-reprise, le même choix est idempotent ; un autre code est refusé.
+**Décision de parcours :** pour le premier administrateur, la langue d'interface initiale provient des préférences du navigateur (en-tête HTTP `Accept-Language` / préférence du navigateur), pas d'une liste de langues de la BDD. Cette correction rétablit l'indépendance du formulaire, mais **ne persiste pas encore une langue préférée dans le compte** : l'entité `Admin` ne possède pas actuellement de propriété dédiée. L'intégration de cette préférence à Admins et sa conservation après connexion sont à réaliser séparément ; ne pas prétendre que ce point est validé par la suppression du sélecteur.
 
-La langue principale est protégée des modifications BO par sa
-définition Settings `editable:false` et par le contrat métier
-du module. `SYMSVEL_BO_DOMAIN` et les paramètres de connexion restent
-inchangés. Les crash-tests d'installation et de reprise doivent
-vérifier que les modules obligatoires sont résolus en `--dev` et
-que le formulaire trouve bien les routes de Languages après migrations.
+Le module Languages demeure natif, propriétaire du catalogue, des réglages linguistiques globaux et de leur initialisation à l'étape appropriée, après disponibilité de ses données. Aucun mécanisme supplémentaire n'est introduit dans Core ou Back. La commande de bootstrap Languages existante n'est pas supprimée : seul son appel prématuré depuis le Wizard est retiré.
+
+**Validation requise :** PHPUnit/CI sur `dev`, puis CT depuis zéro en vérifiant le rendu de `/setup/admin` sans accès au catalogue Languages, la création du compte et l'absence d'erreur si les langues ne sont pas encore peuplées. La préférence de langue effective du compte reste une vérification distincte tant que sa persistance n'est pas implémentée.
