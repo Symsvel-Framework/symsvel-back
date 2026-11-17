@@ -188,14 +188,22 @@ final class SetupController extends AbstractController
                     $this->addFlash('setup_error', $exception->getMessage());
                     return $this->redirectToRoute('symsvel_setup_admin');
                 }
-                $process = new Process([PHP_BINARY, 'bin/console', 'symsvel:admins:bootstrap:stdin', '--no-interaction'], $backend);
-                // The developer's interface language comes directly from the browser,
-                // never from the not-yet-initialized Languages database catalog.
+                // Migrations and Languages catalog are ready at this phase.
+                // Browser language initializes the site's one immutable primary ISO code.
                 $browserLanguage = strtolower(explode('-', str_replace('_', '-',
-                    (string) ($request->getPreferredLanguage() ?? 'en')))[0]);
+                    (string) ($request->getPreferredLanguage() ?? 'fr')))[0]);
                 if (preg_match('/^[a-z]{2,4}$/D', $browserLanguage) !== 1) {
-                    $browserLanguage = 'en';
+                    $browserLanguage = 'fr';
                 }
+                $siteLanguage = new Process([PHP_BINARY, 'bin/console', 'symsvel:languages:bootstrap:stdin', '--no-interaction'], $backend);
+                $siteLanguage->setInput(json_encode(['language' => $browserLanguage], JSON_THROW_ON_ERROR));
+                $siteLanguage->setTimeout(60);
+                $siteLanguage->run();
+                if (!$siteLanguage->isSuccessful()) {
+                    $this->addFlash('setup_error', 'Initialisation de la langue du site impossible. Vérifiez le référentiel Languages et reprenez le Setup.');
+                    return $this->redirectToRoute('symsvel_setup_admin');
+                }
+                $process = new Process([PHP_BINARY, 'bin/console', 'symsvel:admins:bootstrap:stdin', '--no-interaction'], $backend);
                 $process->setInput(json_encode(['email' => trim($email), 'password' => $password,
                     'language' => $browserLanguage], JSON_THROW_ON_ERROR));
                 $process->setTimeout(60);
