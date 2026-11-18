@@ -35,3 +35,51 @@ un point d'entrée CLI spécifique du module pour initialiser la
 langue principale sans importer sa logique métier. Le statut
 de migration et les essais multibase doivent être validés avant
 publication stable.
+
+## Traductions natives et modulaires (18/11/2026)
+
+Les traductions restent une responsabilité du **module natif Languages**, même
+dans les projets monolingues : la langue principale est configurable lors du
+Setup, et ses textes demeurent éditables depuis le BO sans activer le
+multilinguisme. Aucun module « Translations » supplémentaire n'est introduit.
+
+**Identité publique d'une clé :** `<scope>.<module|system>.<key>`, avec les
+scopes BO, App et Front. Le stockage Languages conserve `scope` distinct de
+`translation_key` (`module.key`), sans dupliquer le scope dans la BDD ni
+introduire de colonne propriétaire dérivable. Le préfixe `system` est réservé
+aux seuls composants natifs des hôtes Svelte sans propriétaire modulaire.
+Même lorsqu'une route Auth est physiquement dans BO/App, ses libellés
+fonctionnels appartiennent au module Auth. `generated` est un répertoire
+réservé aux personnalisations publiées, jamais un nom de module propriétaire.
+
+Chaque module ayant des textes par scope fournit des fichiers
+`<scope>/src/lib/translations/<lang>.ts`. Le Module Maker crée le dossier
+vide, sans clés fictives. Les dictionnaires TypeScript sont des exports d'objets
+JSON stricts (`export default {"key":"Texte"} as const;`), lus comme données
+sans exécution TypeScript. Ils sont exclus du formatage automatique pour
+garantir ce contrat. Tooling déploie les sources dans l'hôte à
+`<scope>/src/lib/translations/<module>/<lang>.ts`, et les textes
+strictement natifs demeurent dans `.../translations/system/<lang>.ts`.
+
+**Cycle de vie :** Tooling découvre les modules Composer installés et leurs
+fichiers, prépare un inventaire validé, puis invoque Languages **après les
+migrations** pour persister les clés et traductions initiales. Les valeurs
+historiques ou modifiées dans le BO/CSV sont protégées ; seules les valeurs
+livrées par défaut et non personnalisées peuvent être mises à jour. Le cycle
+s'applique à l'installation de modules et à la mise à jour native des hôtes,
+à l'intérieur des transactions et checkpoints existants. La lecture du runtime
+reste statique dans SvelteKit : les surcharges sont publiées par Tooling en
+`lib/translations/generated/<lang>.ts`, puis intégrées au build, sans
+requêtes de dictionnaire runtime, Redis obligatoire ou serveur Node de prod.
+
+**Parcours BO :** sélectionner la langue, afficher les modules réellement
+installés et `system` avec pourcentages et compteurs, puis ouvrir le module,
+filtrer et éditer. Les statistiques comptent les textes explicitement stockés
+et non vides, **jamais les fallbacks**, et la progression globale est pondérée
+par le nombre de clés. Une catégorie sans clé n'est pas affichée à 100 %.
+Les scopes BO/App/Front sont proposés dans un module uniquement lorsqu'ils
+disposent de clés.
+
+Ce contrat n'est considéré terminé qu'après CI verte, tests automatisés,
+essais de migrations multibase, crash-tests locaux validés par l'utilisateur
+et documentation synchronisée.
