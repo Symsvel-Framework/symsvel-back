@@ -105,3 +105,29 @@ le catalogue Flex, mais sa distribution distante, l'ajout au manifeste natif
 `config/symsvel-native-modules.json` et le CT XT restent à réaliser.
 Ne pas annoncer un projet installé avec Countries tant que ces opérations,
 les tests de migrations multibase et la CI distribuée ne sont pas validés.
+
+## Cadrage avant le prochain CT (19/11/2026)
+
+**Countries** est natif obligatoire dans la distribution cible :
+l'installation et la migration ont lieu même si le site reste monolingue.
+Le BO n'affiche sa navigation que si `languages.multilingual` est activé
+et si les ACL l'autorisent. Les données de pays restent disponibles pour
+l'App/Front en mode monolingue. L'intégration dans le manifeste de Back
+reste conditionnée aux preuves de distribution de la recette, tests de
+migrations multibases et crash-tests ; la PR du module est encore draft.
+
+**Storage**, contrairement à une décision historique de novembre, est
+désormais un **module facultatif et différé**. Même si son contrat
+local-first/fallback reste utile, il n'appartient pas à Core et ne doit
+pas faire partie des dépendances natives du prochain Setup.
+
+**Mails personnalisables** reste également une fonctionnalité modulaire
+facultative, après la stabilisation du transport et des mails natifs.
+
+Les **profils BO/App** sont à implémenter via les modules d'identité
+respectifs et Auth, sans remplacer les permissions administratives par
+une autorisation de libre modification d'autres comptes.
+
+Les **alertes de configuration** appartiennent déjà au shell BO et à
+Settings. Elles suivent les déclarations `required` et `configured`
+des propriétaires, sans inventer un autre moteur d'onboarding.
