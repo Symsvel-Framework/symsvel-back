@@ -100,9 +100,10 @@ continuent à consulter les pays actifs, y compris en projet monolingue.
 Le changement de paramètre peut déclencher une nouvelle vérification de
 navigation sans rechargement ; le BO ne possède pas la règle Countries.
 
-**État d'intégration :** portage en PR draft Countries ; recette préparée dans
-le catalogue Flex, mais sa distribution distante, l'ajout au manifeste natif
-`config/symsvel-native-modules.json` et le CT XT restent à réaliser.
+**État d'intégration :** portage en PR draft Countries ; le manifeste natif
+`config/symsvel-native-modules.json` inclut maintenant Countries après
+Languages, sans rendre son administration visible en monolingue. La
+distribution distante de la recette et le CT XT restent à réaliser.
 Ne pas annoncer un projet installé avec Countries tant que ces opérations,
 les tests de migrations multibase et la CI distribuée ne sont pas validés.
 

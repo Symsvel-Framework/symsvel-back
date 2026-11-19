@@ -45,3 +45,20 @@ sa commande console par entrée standard locale. La sélection
 est définitive et la langue choisie reste active.
 Le multilinguisme public demeure désactivé tant qu'il n'a pas été
 activé dans Settings. Le test de démarrage complet reste exigé.
+
+## Countries : installation native (19/11/2026)
+
+Le manifeste `config/symsvel-native-modules.json` demande désormais
+`symsvel-framework/module-countries` **après Languages** pour tous les
+projets, y compris ceux sans App, Front ou multilinguisme. Countries garde
+ses données disponibles via `/apiopen/countries` ou `/api/countries` ;
+l'interface d'administration est masquée tant que
+`languages.multilingual` n'est pas activé.
+
+**Point de distribution :** la recette Countries doit être déployée par
+l'équipe sur `recipes.xavier-tezza.fr` avant un reset / CT neuf. La
+présence du module dans le manifeste ne prouve ni la résolution Composer,
+ni l'exécution des migrations : les crash-tests d'installation
+PostgreSQL/MySQL/MariaDB/SQLite, les ACL et le menu BO conditionnel
+restent des critères de validation. Aucun déploiement n'est réalisé
+depuis le code de cette modification.

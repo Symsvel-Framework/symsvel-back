@@ -22,6 +22,11 @@ final class NativeModulesManifestTest extends TestCase
         self::assertContains('symsvel-framework/module-settings', $manifest['modules']);
         self::assertContains('symsvel-framework/module-mails', $manifest['modules']);
         self::assertContains('symsvel-framework/module-languages', $manifest['modules']);
+        self::assertContains('symsvel-framework/module-countries', $manifest['modules']);
+        self::assertLessThan(
+            array_search('symsvel-framework/module-countries', $manifest['modules'], true),
+            array_search('symsvel-framework/module-languages', $manifest['modules'], true),
+        );
         self::assertLessThan(
             array_search('symsvel-framework/module-two-factor', $manifest['modules'], true),
             array_search('symsvel-framework/module-auth', $manifest['modules'], true),
