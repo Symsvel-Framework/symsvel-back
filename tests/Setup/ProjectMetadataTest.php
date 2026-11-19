@@ -9,6 +9,29 @@ use PHPUnit\Framework\TestCase;
 
 final class ProjectMetadataTest extends TestCase
 {
+    public function testPublicNameNeverExposesPrivateProjectMetadata(): void
+    {
+        $root = sys_get_temp_dir().'/symsvel-public-brand-'.bin2hex(random_bytes(8));
+        mkdir($root);
+        mkdir($root.'/.symsvel');
+        try {
+            $metadata = new ProjectMetadata();
+            self::assertSame('SymSvel', $metadata->publicName($root));
+            $metadata->save($root, '  Projet Démo ', 'private.localhost');
+            self::assertSame('Projet Démo', $metadata->publicName($root));
+            $path = $root.'/.symsvel/project.json';
+            file_put_contents($path, json_encode([
+                'schema' => 1, 'name' => ['invalid'], 'channel' => 'dev',
+                'local_domain' => 'private.localhost',
+            ], JSON_THROW_ON_ERROR));
+            self::assertSame('SymSvel', $metadata->publicName($root));
+        } finally {
+            @unlink($root.'/.symsvel/project.json');
+            @rmdir($root.'/.symsvel');
+            @rmdir($root);
+        }
+    }
+
     public function testWritesPrivateMetadataAndSupportsRetry(): void
     {
         $root = sys_get_temp_dir().'/symsvel-project-'.bin2hex(random_bytes(8));
