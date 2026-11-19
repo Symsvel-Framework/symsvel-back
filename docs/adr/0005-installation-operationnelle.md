@@ -55,10 +55,11 @@ ses données disponibles via `/apiopen/countries` ou `/api/countries` ;
 l'interface d'administration est masquée tant que
 `languages.multilingual` n'est pas activé.
 
-**Point de distribution :** la recette Countries doit être déployée par
-l'équipe sur `recipes.xavier-tezza.fr` avant un reset / CT neuf. La
-présence du module dans le manifeste ne prouve ni la résolution Composer,
-ni l'exécution des migrations : les crash-tests d'installation
-PostgreSQL/MySQL/MariaDB/SQLite, les ACL et le menu BO conditionnel
-restent des critères de validation. Aucun déploiement n'est réalisé
-depuis le code de cette modification.
+**Distribution :** la recipe Countries a été déclarée prête par
+le mainteneur et sa structure a été vérifiée dans `symsvel-recipes/main`
+(bundle et import des routes). La disponibilité effective via le
+catalogue Flex distant et l'application sur XT doivent toujours être
+validées par une installation neuve. La présence du module dans le
+manifeste ne prouve ni la résolution Composer, ni l'exécution des
+migrations : les crash-tests PostgreSQL/MySQL/MariaDB/SQLite, les ACL et
+le menu BO conditionnel restent des critères de validation.
