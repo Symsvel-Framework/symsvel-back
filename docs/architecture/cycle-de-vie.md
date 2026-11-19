@@ -47,3 +47,23 @@ Tooling récent est requis pour bénéficier de cette synchronisation.
 La vérification de l'ordre du hook est automatisée ; les CT XT avec
 `debug:router`, `require/update/remove` et restauration restent
 obligatoires avant clôture du ticket Tooling #64.
+
+## Vérification HTTP du Healthcheck Core en canal dev (19/11/2026)
+
+La route Core `GET /api/health` est publiée par un contrôleur Symfony
+étiqueté `routing.controller`. Le Back utilise déjà le chargement natif
+`routing.controllers`, sans import supplémentaire dans `config/routes/`.
+Pour vérifier la compatibilité sans modifier les contraintes Composer
+actuelles (`symsvel-framework/core: ^1.1`), la CI Back lance d'abord ses
+tests verrouillés, puis, sur `dev` seulement, récupère Core `dev` dans
+un répertoire temporaire, le résout comme package Composer `path`
+à version `dev-dev` **uniquement dans le workspace du runner**, vide
+le cache de test, vérifie `debug:router symsvel_core_liveness` et appelle
+réellement `GET /api/health` avec le client HTTP Symfony.
+
+Le test `CoreHealthHttpTest` est ignoré dans la suite verrouillée si le
+Core stable ne contient pas encore le contrôleur, puis exécuté avec Core
+de développement dans l'étape dédiée. La CI n'enregistre aucun changement
+de contrainte dans Git et ne publie aucune release. L'endpoint garantit
+uniquement la liveness du routage PHP : il ne contrôle ni SGBD ni mail.
+Le crash-test XT HTTP reste un critère distinct avant clôture.

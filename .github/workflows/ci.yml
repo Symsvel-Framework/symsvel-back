@@ -43,6 +43,23 @@ jobs:
           php bin/console lint:container --env=test
           php bin/console list symsvel --env=test
       - run: composer qa
+      # Exercise the current Core development contract only in the CI workspace.
+      - name: Checkout Core dev for HTTP integration
+        if: github.ref == 'refs/heads/dev'
+        uses: actions/checkout@v4
+        with:
+          repository: Symsvel-Framework/symsvel-core
+          ref: dev
+          token: ${{ secrets.SYMSVEL_READ_TOKEN }}
+          path: .symcore-ci
+      - name: Test Core dev liveness through real Back routing
+        if: github.ref == 'refs/heads/dev'
+        run: |
+          composer config repositories.symsvel-core-ci '{"type":"path","url":"./.symcore-ci","options":{"symlink":true,"versions":{"symsvel-framework/core":"dev-dev"}}}'
+          composer require 'symsvel-framework/core:dev-dev' --with-all-dependencies --no-scripts --no-interaction --no-progress
+          php bin/console cache:clear --env=test
+          php bin/console debug:router symsvel_core_liveness --env=test
+          php vendor/bin/phpunit tests/Integration/CoreHealthHttpTest.php --display-skipped
 
   # Installation smoke temporairement désactivé.
   # À réactiver lors du chantier modules / interfaces SvelteKit.
