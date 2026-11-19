@@ -17,6 +17,12 @@ try {
     $inventory->prepare($backend);
     $modules = (new \SymSvel\Tooling\Module\ComposerModuleRegistry())->discover($backend);
     (new \SymSvel\Tooling\Module\ModuleBundleResolver())->resolve($modules);
+    // A Composer "path" symlink does not apply its local Flex recipe. Repair
+    // explicit, module-owned route imports before cache:clear loads them.
+    // Older stable Tooling versions do not yet provide this synchronizer.
+    if (class_exists(\SymSvel\Tooling\Module\ComposerModuleRouteSynchronizer::class)) {
+        (new \SymSvel\Tooling\Module\ComposerModuleRouteSynchronizer())->sync($backend);
+    }
     (new \SymSvel\Tooling\Module\ComposerModuleBundleMapWriter())->write($backend);
     (new \SymSvel\Tooling\Module\ComposerModuleInventoryWriter())->write($backend);
     echo "SymSvel: Composer ownership refreshed before cache compilation.\n";

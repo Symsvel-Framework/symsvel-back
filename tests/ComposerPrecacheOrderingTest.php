@@ -19,5 +19,12 @@ final class ComposerPrecacheOrderingTest extends TestCase
             self::assertContains('@php scripts/symsvel-module-sync.php', $scripts);
         }
         self::assertFileExists($root.'/scripts/symsvel-module-precache.php');
+        $precache = (string) file_get_contents($root.'/scripts/symsvel-module-precache.php');
+        self::assertStringContainsString('ComposerModuleRouteSynchronizer', $precache);
+        self::assertLessThan(
+            strpos($precache, 'ComposerModuleBundleMapWriter'),
+            strpos($precache, 'ComposerModuleRouteSynchronizer'),
+            'Local routes must be checked before Symfony cache compilation and bundle publication.',
+        );
     }
 }
