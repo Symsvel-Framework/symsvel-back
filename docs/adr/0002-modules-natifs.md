@@ -83,3 +83,25 @@ disposent de clés.
 Ce contrat n'est considéré terminé qu'après CI verte, tests automatisés,
 essais de migrations multibase, crash-tests locaux validés par l'utilisateur
 et documentation synchronisée.
+
+## Countries : module natif obligatoire, menu conditionnel (19/11/2026)
+
+Countries rejoint Languages parmi les **modules natifs installés sur tous les
+projets**, BO seul compris. Le catalogue des pays et territoires et ses
+migrations appartiennent au module Countries, jamais à Back ni Core. Le module
+est initialisé lors du cycle normal d'installation/migrations, sans
+consultation réseau ni migration conditionnelle au mode multilingue.
+
+**Visibilité administrative :** Countries n'apparaît dans la navigation BO
+que si le paramètre existant `languages.multilingual` vaut `1` et si
+l'administrateur est autorisé à consulter les pays. L'API du module masque
+son endpoint-sonde lorsque la fonction est désactivée. L'App et le Front
+continuent à consulter les pays actifs, y compris en projet monolingue.
+Le changement de paramètre peut déclencher une nouvelle vérification de
+navigation sans rechargement ; le BO ne possède pas la règle Countries.
+
+**État d'intégration :** portage en PR draft Countries ; recette préparée dans
+le catalogue Flex, mais sa distribution distante, l'ajout au manifeste natif
+`config/symsvel-native-modules.json` et le CT XT restent à réaliser.
+Ne pas annoncer un projet installé avec Countries tant que ces opérations,
+les tests de migrations multibase et la CI distribuée ne sont pas validés.
