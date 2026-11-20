@@ -67,3 +67,30 @@ de développement dans l'étape dédiée. La CI n'enregistre aucun changement
 de contrainte dans Git et ne publie aucune release. L'endpoint garantit
 uniquement la liveness du routage PHP : il ne contrôle ni SGBD ni mail.
 Le crash-test XT HTTP reste un critère distinct avant clôture.
+
+## Cohérence des releases stables et du `composer.lock` (20/11/2026)
+
+Le Back est un projet Composer **distribué avec son `composer.lock`**. Lors de
+`symsvel create-project` sans `--dev`, Composer installe les versions verrouillées
+avant de charger les modules natifs. Le fait de disposer de tags récents dans
+Satis ne suffit donc pas à forcer leur sélection : le verrou doit également
+référencer des versions compatibles avec le contrat publié.
+
+Le premier CT stable a échoué lors de la synchronisation des dictionnaires
+Svelte (collision sur `bo/src/lib/translations/en.ts`) : le Back `v1.2.0`
+verrouillait encore Core et Tooling en `v1.1.0`. Or l'isolation des
+dictionnaires par module est disponible dans Tooling `v1.2.0`, pas dans
+`v1.1.0`. Le squelette stable requiert désormais `^1.2` pour Core et
+Tooling et verrouille leurs tags `v1.2.0`. Les autres dépendances ne changent
+pas dans ce correctif.
+
+`ComposerStableLockTest` vérifie que le lock correspond au manifeste,
+qu'il fixe des versions stables Core/Tooling assez récentes et que les
+références Git/dist sont cohérentes. Toute publication future du Back doit
+mettre à jour **ensemble** `composer.json`, `composer.lock` et cette
+documentation, et vérifier la résolution Composer en installation vierge.
+
+Le warning de suppression `.svelte-kit/generated/dev` pendant le rollback
+du CT initial est un incident distinct. Le snapshot transactionnel conservé
+ne doit pas être effacé sans diagnostic ; une réussite de l'installation
+après correction ne constituerait pas une validation du rollback exhaustif.
