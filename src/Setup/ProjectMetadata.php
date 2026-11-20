@@ -6,6 +6,31 @@ namespace App\Setup;
 
 final class ProjectMetadata
 {
+    /**
+     * Public project title only. Never return the local domain, channel or Setup state.
+     * A missing/unreadable private file does not break the public interfaces.
+     */
+    public function publicName(string $workspace): string
+    {
+        $directory = $workspace.'/.symsvel';
+        $path = $directory.'/project.json';
+        if (is_link($directory) || is_link($path) || !is_file($path) || !is_readable($path)) {
+            return 'SymSvel';
+        }
+        try {
+            $metadata = json_decode((string) file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
+            if (!is_array($metadata) || ($metadata['schema'] ?? null) !== 1
+                || !is_string($metadata['name'] ?? null)) {
+                return 'SymSvel';
+            }
+            $name = trim($metadata['name']);
+            $this->validate($name);
+            return $name;
+        } catch (\Throwable) {
+            return 'SymSvel';
+        }
+    }
+
     public function validate(string $name): void
     {
         $name = trim($name);

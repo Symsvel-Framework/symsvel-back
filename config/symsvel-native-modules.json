@@ -3,7 +3,13 @@
   "modules": [
     "symsvel-framework/module-admins",
     "symsvel-framework/module-roles",
-    "symsvel-framework/module-acls"
+    "symsvel-framework/module-acls",
+    "symsvel-framework/module-settings",
+    "symsvel-framework/module-mails",
+    "symsvel-framework/module-auth",
+    "symsvel-framework/module-two-factor",
+    "symsvel-framework/module-languages",
+    "symsvel-framework/module-countries"
   ],
   "components": {
     "app": [

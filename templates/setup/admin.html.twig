@@ -10,10 +10,12 @@
     <input type="hidden" name="setup_action" value="provision">
     <label for="admin_email">Adresse e-mail</label>
     <input id="admin_email" name="admin_email" type="email" maxlength="254" required autocomplete="email" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
-    <label for="admin_password">Mot de passe (12 caractères minimum)</label>
-    <input id="admin_password" name="admin_password" type="password" minlength="12" required autocomplete="new-password" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
+    <label for="admin_password">Mot de passe (12 à 1024 octets UTF-8)</label>
+    <input id="admin_password" name="admin_password" type="password" maxlength="1024" required autocomplete="new-password" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
+    <meter id="admin-password-strength" min="0" max="4" value="0" style="display:block;width:100%" aria-label="Diversité du mot de passe"></meter>
+    <p id="admin-password-hint" role="status">12 à 1024 octets UTF-8, sans caractère nul. Une phrase longue et des caractères variés sont conseillés.</p>
     <label for="admin_password_confirmation">Confirmer le mot de passe</label>
-    <input id="admin_password_confirmation" name="admin_password_confirmation" type="password" minlength="12" required autocomplete="new-password" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
+    <input id="admin_password_confirmation" name="admin_password_confirmation" type="password" maxlength="1024" required autocomplete="new-password" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
     <button type="submit">Créer le premier administrateur</button>
   </form>
   <hr>
@@ -24,4 +26,45 @@
     <button type="submit">Relancer la finalisation</button>
   </form>
 </main>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+(() => {
+  const password = document.getElementById('admin_password');
+  const confirmation = document.getElementById('admin_password_confirmation');
+  const meter = document.getElementById('admin-password-strength');
+  const hint = document.getElementById('admin-password-hint');
+  const form = password.closest('form');
+  const valid = (value) => {
+    const count = new TextEncoder().encode(value).length;
+    return count >= 12 && count <= 1024 && !value.includes('\0');
+  };
+  const update = () => {
+    const value = password.value;
+    const bytes = new TextEncoder().encode(value).length;
+    const classes = [/\p{Ll}/u, /\p{Lu}/u, /\p{Nd}/u, /[^\p{L}\p{N}\s]/u]
+      .filter((pattern) => pattern.test(value)).length;
+    const score = value === '' ? 0 : Math.min(4,
+      Number(bytes >= 12) + Number(bytes >= 16) + Number(classes >= 2) + Number(classes >= 3));
+    meter.value = score;
+    hint.textContent = 'Diversité : ' + ['Aucune saisie', 'Très faible', 'Faible', 'Moyenne', 'Bonne'][score]
+      + '. 12 à 1024 octets UTF-8, sans caractère nul. Une phrase longue est conseillée.';
+    password.setCustomValidity('');
+  };
+  password.addEventListener('input', update);
+  form.addEventListener('submit', (event) => {
+    if (!valid(password.value)) {
+      event.preventDefault();
+      password.setCustomValidity('Le mot de passe doit contenir entre 12 et 1024 octets UTF-8, sans caractère nul.');
+      password.reportValidity();
+    } else if (password.value !== confirmation.value) {
+      event.preventDefault();
+      confirmation.setCustomValidity('Les mots de passe ne correspondent pas.');
+      confirmation.reportValidity();
+    }
+  });
+  confirmation.addEventListener('input', () => confirmation.setCustomValidity(''));
+})();
+</script>
 {% endblock %}

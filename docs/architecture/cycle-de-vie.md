@@ -14,3 +14,56 @@
 La provenance des packages et des composants est indépendante de `APP_ENV` ; elle est enregistrée à la création du projet. Les opérations Composer et les mises à jour natives des composants suivent des mécanismes différents. Les crash-tests XT valideront l'ensemble avant clôture des PR en cours.
 
 Voir [l'ADR d'installation](../adr/0005-installation-operationnelle.md), [l'ADR des données](../adr/0008-donnees-et-migrations.md) et [le Setup](../projets/setup.md).
+
+## Ordre des scripts Composer et inventaire de propriété
+
+Lors d'un `composer require`, `update` ou `remove`, Composer modifie `vendor/` avant d'exécuter les scripts `post-install-cmd` / `post-update-cmd`. Le script autonome `scripts/symsvel-module-precache.php` doit donc précéder `@auto-scripts` : il vérifie les modules installés et republie `.symsvel/bundles.php` puis `.symsvel/modules.json` depuis les métadonnées Composer, sans démarrer le kernel Symfony. `cache:clear` peut ensuite compiler le conteneur Settings avec les chemins des modules réellement présents. Le script historique `symsvel-module-sync.php` reste exécuté après les auto-scripts pour la synchronisation complète et les builds Svelte.
+
+Le contrôle de propriété de Settings reste strict : aucun chemin manquant ou fournisseur sans propriétaire vérifié n'est toléré. Le rollback global de Tooling couvre ces écritures dans la transaction. Le parcours réel de suppression Mails sur XT et les CI doivent encore être validés avant de déclarer le correctif terminé.
+
+### Routes Symfony des modules locaux (19/11/2026)
+
+Pour un module fourni par un repository Composer `path` avec symlink,
+Flex ne déclenche pas automatiquement la recette contenue dans ce dépôt.
+Le précache appelle donc `ComposerModuleRouteSynchronizer` de Tooling,
+**avant** `cache:clear`, lorsque cette classe est disponible. Tooling
+consulte la déclaration explicite `recipe/recipe.json` du module,
+importe uniquement son dossier de contrôleurs si celui-ci contient
+réellement des contrôleurs PHP, puis maintient un fichier
+`config/routes/<slug>.yaml` par module. Aucun mécanisme de routage
+central ou découverte implicite n'est ajouté à Back ou Core.
+
+Le registre `.symsvel/composer-routes.json` stocke uniquement la
+**propriété et l'empreinte** des fichiers générés. Les routes créées par
+Symfony Flex ou personnalisées par le projet sont préservées. Les imports
+générés sont retirés lors de `remove` seulement si leur empreinte est
+restée identique. Cette étape précède `@auto-scripts` pour empêcher le
+chargement de routes obsolètes après suppression de leur module.
+
+Le garde `class_exists` maintient la compatibilité avec les versions
+de Tooling antérieures actuellement présentes dans les projets en canal
+stable, sans modifier les contraintes Composer. Sur le canal `dev`, le
+Tooling récent est requis pour bénéficier de cette synchronisation.
+La vérification de l'ordre du hook est automatisée ; les CT XT avec
+`debug:router`, `require/update/remove` et restauration restent
+obligatoires avant clôture du ticket Tooling #64.
+
+## Vérification HTTP du Healthcheck Core en canal dev (19/11/2026)
+
+La route Core `GET /api/health` est publiée par un contrôleur Symfony
+étiqueté `routing.controller`. Le Back utilise déjà le chargement natif
+`routing.controllers`, sans import supplémentaire dans `config/routes/`.
+Pour vérifier la compatibilité sans modifier les contraintes Composer
+actuelles (`symsvel-framework/core: ^1.1`), la CI Back lance d'abord ses
+tests verrouillés, puis, sur `dev` seulement, récupère Core `dev` dans
+un répertoire temporaire, le résout comme package Composer `path`
+à version `dev-dev` **uniquement dans le workspace du runner**, vide
+le cache de test, vérifie `debug:router symsvel_core_liveness` et appelle
+réellement `GET /api/health` avec le client HTTP Symfony.
+
+Le test `CoreHealthHttpTest` est ignoré dans la suite verrouillée si le
+Core stable ne contient pas encore le contrôleur, puis exécuté avec Core
+de développement dans l'étape dédiée. La CI n'enregistre aucun changement
+de contrainte dans Git et ne publie aucune release. L'endpoint garantit
+uniquement la liveness du routage PHP : il ne contrôle ni SGBD ni mail.
+Le crash-test XT HTTP reste un critère distinct avant clôture.

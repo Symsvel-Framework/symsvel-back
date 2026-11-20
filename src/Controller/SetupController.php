@@ -7,6 +7,7 @@ namespace App\Controller;
 use App\Setup\DatabaseConnectionConfig;
 use App\Setup\PendingAdministrator;
 use App\Setup\ProjectMetadata;
+use App\Setup\LocalCorsOrigins;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -84,8 +85,11 @@ final class SetupController extends AbstractController
             }
             $existing = is_file($envFile) ? (string) file_get_contents($envFile) : '';
             $lines = preg_split('/\r\n|\n|\r/', $existing) ?: [];
-            $lines = array_values(array_filter($lines, static fn (string $line): bool => preg_match('/^\s*DATABASE_URL\s*=/', $line) !== 1));
+            $lines = array_values(array_filter($lines, static fn (string $line): bool => preg_match('/^\s*(?:DATABASE_URL|SYMSVEL_CORS_ALLOW_ORIGIN|SYMSVEL_BO_DOMAIN)\s*=/', $line) !== 1));
             $lines[] = 'DATABASE_URL='.json_encode($url, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
+            $lines[] = 'SYMSVEL_CORS_ALLOW_ORIGIN='.json_encode((new LocalCorsOrigins())->fromDomain($localDomain), JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
+            // This public hostname must be readable by PHP-FPM, unlike private CLI Setup metadata.
+            $lines[] = 'SYMSVEL_BO_DOMAIN='.json_encode(strtolower(trim($localDomain)), JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
             $contents = implode("\n", $lines)."\n";
             $temporary = tempnam($backend, '.env-local-');
             if ($temporary === false) {
@@ -184,8 +188,24 @@ final class SetupController extends AbstractController
                     $this->addFlash('setup_error', $exception->getMessage());
                     return $this->redirectToRoute('symsvel_setup_admin');
                 }
+                // Migrations and Languages catalog are ready at this phase.
+                // Browser language initializes the site's one immutable primary ISO code.
+                $browserLanguage = strtolower(explode('-', str_replace('_', '-',
+                    (string) ($request->getPreferredLanguage() ?? 'fr')))[0]);
+                if (preg_match('/^[a-z]{2,4}$/D', $browserLanguage) !== 1) {
+                    $browserLanguage = 'fr';
+                }
+                $siteLanguage = new Process([PHP_BINARY, 'bin/console', 'symsvel:languages:bootstrap:stdin', '--no-interaction'], $backend);
+                $siteLanguage->setInput(json_encode(['language' => $browserLanguage], JSON_THROW_ON_ERROR));
+                $siteLanguage->setTimeout(60);
+                $siteLanguage->run();
+                if (!$siteLanguage->isSuccessful()) {
+                    $this->addFlash('setup_error', 'Initialisation de la langue du site impossible. Vérifiez le référentiel Languages et reprenez le Setup.');
+                    return $this->redirectToRoute('symsvel_setup_admin');
+                }
                 $process = new Process([PHP_BINARY, 'bin/console', 'symsvel:admins:bootstrap:stdin', '--no-interaction'], $backend);
-                $process->setInput(json_encode(['email' => trim($email), 'password' => $password], JSON_THROW_ON_ERROR));
+                $process->setInput(json_encode(['email' => trim($email), 'password' => $password,
+                    'language' => $browserLanguage], JSON_THROW_ON_ERROR));
                 $process->setTimeout(60);
                 $process->run();
                 if (!$process->isSuccessful()) {

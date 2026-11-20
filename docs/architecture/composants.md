@@ -14,3 +14,15 @@
 Le BO est présent dans toute installation. App et Front sont optionnels. Un module apporte ses éléments selon ses scopes, sans transformer Core en application métier.
 
 **Déploiement des interfaces :** Node.js est utilisé pour le développement et la compilation. En production, les fichiers statiques générés sont servis par le serveur web, sans processus Node.js.
+
+## Endpoints et opérations techniques (19/11/2026)
+
+Un contrôle de liveness minimal peut être porté par **Core** : simple
+disponibilité HTTP, sans dépendance à la BDD ou à un module facultatif.
+Le routage du projet Back peut l'exposer sans logique métier. Les
+diagnostics de readiness approfondis forment un besoin séparé et ne
+doivent pas altérer la réponse liveness minimale.
+
+La documentation intégrée reprend les contenus fournis par les modules :
+l'assemblage et les builds relèvent de CLI/Tooling, non du Setup Wizard,
+et la navigation documentaire peut être exposée côté BO.

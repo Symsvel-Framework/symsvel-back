@@ -37,7 +37,7 @@ symsvel setup
 
 Le Wizard local collecte les informations du projet, les paramètres PostgreSQL et les identifiants du premier administrateur. La finalisation applique les migrations et prépare l'administrateur. La configuration de connexion est écrite dans `backend/.env.local`. La création initiale ne doit pas exiger une base déjà configurée.
 
-Le manifeste `config/symsvel-native-modules.json` exige Admins, Roles et ACLs ; Users est requis lorsque App est installée. **Le Setup actuel vérifie une connexion PostgreSQL** : la prise en charge MySQL/MariaDB/SQLite dans le Wizard relève de l'objectif architectural, pas d'une fonctionnalité déjà démontrée. L'accès BO/App avec 2FA est un contrat cible à valider séparément ; ne pas le déduire de la seule réussite du formulaire Setup.
+Le manifeste `config/symsvel-native-modules.json` exige Admins, Roles, ACLs et Settings ; Users est requis lorsque App est installée. **Le Setup actuel vérifie une connexion PostgreSQL** : la prise en charge MySQL/MariaDB/SQLite dans le Wizard relève de l'objectif architectural, pas d'une fonctionnalité déjà démontrée. L'accès BO/App avec 2FA est un contrat cible à valider séparément ; ne pas le déduire de la seule réussite du formulaire Setup.
 
 Voir [le guide Setup](docs/projets/setup.md), [le cycle de vie](docs/architecture/cycle-de-vie.md) et [les ADR](docs/adr/README.md).
 
@@ -81,3 +81,7 @@ Le Wizard conserve le parcours continu : écriture atomique de `backend/.env.loc
 ## CI Docker locale (10/11/2026)
 
 La CI active `.github/workflows/ci.yml` exécute les tests du Back sur le runner Docker ARM64 d'organisation (`self-hosted`, `linux`, `ARM64`, `symsvel`). PHP 8.4, Composer et les extensions nécessaires sont préinstallés dans l'image ; leur présence est vérifiée avant les étapes de test. Le workflow GitHub-hosted original est conservé, désactivé, dans `.github/workflows/ci.yml.stub`. Pour revenir à GitHub-hosted, restaurer ce fichier sous `ci.yml`. Le smoke-test d'installation reste désactivé comme auparavant. La CI locale dépend de la disponibilité du Mac et de Docker ; n'exécuter que des contributions de confiance sur le runner persistant. La configuration d'accès aux dépôts privés doit éviter toute persistance de jetons entre jobs. Validation finale : CI verte et crash-tests XT requis.
+
+### Visibilité des tests ignorés
+
+La CI affiche les raisons des tests PHPUnit ignorés avec `--display-skipped` (directement ou via le script Composer QA). Un test ignoré ne devient pas bloquant pour autant : les motifs sont examinés pour distinguer prérequis absents et couverture manquante.

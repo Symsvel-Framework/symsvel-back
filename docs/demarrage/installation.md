@@ -20,13 +20,13 @@ Le canal `stable` (par défaut) ou `dev` est conservé dans `backend/.symsvel/pr
 symsvel setup
 ```
 
-Le Wizard actuel configure PostgreSQL, le projet et le premier administrateur. Les modules natifs requis par le manifeste du Back sont Admins, Roles, ACLs, et Users lorsque App est présente. Les moteurs MySQL, MariaDB et SQLite sont prévus par l'architecture mais **ne sont pas proposés par l'implémentation actuelle du formulaire**.
+Le Wizard actuel configure PostgreSQL, le projet et le premier administrateur. Les modules natifs requis par le manifeste du Back sont Admins, Roles, ACLs, Settings, Mails, Auth, Languages et **TwoFactor**, ainsi que Users lorsque App est présente. Auth et TwoFactor sont installés automatiquement par la CLI pendant `create-project` pour toutes les variantes, y compris `--components=bo`. Le premier administrateur configure et valide son TOTP à sa première connexion BO, avant l'émission de la session. Côté App, la 2FA reste configurable via `two-factor.app_required`. Aucun réglage BO ne permet de désactiver cette protection. Les moteurs MySQL, MariaDB et SQLite sont prévus par l'architecture mais **ne sont pas proposés par l'implémentation actuelle du formulaire**.
 
 Le parcours utilisateur de référence est la CLI : ne pas utiliser l'ancien `APP_ENV=core` ni considérer `php bin/console symsvel:install` comme le remplacement de `create-project`. Le code du Tooling conserve cette commande Symfony pour des usages internes.
 
 Voir [le Setup](../projets/setup.md) et [la référence CLI](https://github.com/Symsvel-Framework/symsvel-cli/blob/feat/persist-project-channel/docs/reference/commandes.md).
 
-**Validation en attente :** GitHub/Satis, modules, migrations, builds, authentification et rollbacks sur XT.
+**Validation en attente :** GitHub/Satis, modules (y compris résolution du package TwoFactor dans les canaux `dev` et `stable`), migrations, builds, authentification obligatoire BO/TOTP et rollbacks sur XT. Un package présent sur `dev` ne prouve pas qu'une release stable soit disponible.
 
 **Distribution stable et verrouillage Composer**
 
