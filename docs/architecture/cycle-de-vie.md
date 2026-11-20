@@ -94,3 +94,8 @@ Le warning de suppression `.svelte-kit/generated/dev` pendant le rollback
 du CT initial est un incident distinct. Le snapshot transactionnel conservé
 ne doit pas être effacé sans diagnostic ; une réussite de l'installation
 après correction ne constituerait pas une validation du rollback exhaustif.
+
+Les URL `dist` des deux packages dans le lock doivent cibler les dépôts GitHub
+`Symsvel-Framework/symsvel-core` et `Symsvel-Framework/symsvel-tooling`
+(et non les noms abrégés des packages Composer). Le test vérifie le chemin
+intégral des archives pour détecter cette erreur avant une publication.

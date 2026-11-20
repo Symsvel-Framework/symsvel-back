@@ -53,7 +53,11 @@ final class ComposerStableLockTest extends TestCase
             self::assertMatchesRegularExpression('/^v\d+\.\d+\.\d+$/D', $version);
             self::assertTrue(version_compare(ltrim($version, 'v'), '1.2.0', '>='), $name.' trop ancien : '.$version);
             self::assertSame($package['source']['reference'], $package['dist']['reference']);
-            self::assertStringEndsWith('/zipball/'.$package['source']['reference'], $package['dist']['url']);
+            $slug = substr($name, strlen('symsvel-framework/'));
+            self::assertSame(
+                'https://api.github.com/repos/Symsvel-Framework/symsvel-'.$slug.'/zipball/'.$package['source']['reference'],
+                $package['dist']['url'],
+            );
         }
     }
 }

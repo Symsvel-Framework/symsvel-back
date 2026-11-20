@@ -7559,7 +7559,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Symsvel-Framework/core/zipball/662468e3a5fcaaf76eec85a9f3ce7edc45e3fa95",
+                "url": "https://api.github.com/repos/Symsvel-Framework/symsvel-core/zipball/662468e3a5fcaaf76eec85a9f3ce7edc45e3fa95",
                 "reference": "662468e3a5fcaaf76eec85a9f3ce7edc45e3fa95",
                 "shasum": ""
             },
@@ -10193,7 +10193,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Symsvel-Framework/tooling/zipball/9e83a8416874a4fddaea406aa163583227aa553a",
+                "url": "https://api.github.com/repos/Symsvel-Framework/symsvel-tooling/zipball/9e83a8416874a4fddaea406aa163583227aa553a",
                 "reference": "9e83a8416874a4fddaea406aa163583227aa553a",
                 "shasum": ""
             },
