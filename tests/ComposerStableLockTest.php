@@ -51,7 +51,8 @@ final class ComposerStableLockTest extends TestCase
             $package = $matches[0];
             $version = $package['version'];
             self::assertMatchesRegularExpression('/^v\d+\.\d+\.\d+$/D', $version);
-            self::assertTrue(version_compare(ltrim($version, 'v'), '1.2.0', '>='), $name.' trop ancien : '.$version);
+            $minimum = $name === 'symsvel-framework/tooling' ? '1.3.0' : '1.2.0';
+            self::assertTrue(version_compare(ltrim($version, 'v'), $minimum, '>='), $name.' trop ancien : '.$version);
             self::assertSame($package['source']['reference'], $package['dist']['reference']);
             $slug = substr($name, strlen('symsvel-framework/'));
             self::assertSame(
