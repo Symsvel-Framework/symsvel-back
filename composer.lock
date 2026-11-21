@@ -10185,16 +10185,16 @@
         },
         {
             "name": "symsvel-framework/tooling",
-            "version": "v1.2.0",
+            "version": "v1.3.0",
             "source": {
                 "type": "git",
                 "url": "git@github.com:Symsvel-Framework/symsvel-tooling.git",
-                "reference": "9e83a8416874a4fddaea406aa163583227aa553a"
+                "reference": "755303f621f44d2c4a006e6ee69379cdd8b2e486"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Symsvel-Framework/symsvel-tooling/zipball/9e83a8416874a4fddaea406aa163583227aa553a",
-                "reference": "9e83a8416874a4fddaea406aa163583227aa553a",
+                "url": "https://api.github.com/repos/Symsvel-Framework/symsvel-tooling/zipball/755303f621f44d2c4a006e6ee69379cdd8b2e486",
+                "reference": "755303f621f44d2c4a006e6ee69379cdd8b2e486",
                 "shasum": ""
             },
             "require": {
