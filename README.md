@@ -2,6 +2,19 @@
 
 Squelette applicatif Symfony 8.1 / PHP 8.4 de SymSvel Framework (`symsvel-framework/back`, package Composer de type `project`). Le Back contient la configuration et le runtime de l'application ; les fonctionnalités métier appartiennent aux modules. Les décisions sont conservées dans [les ADR](docs/adr/README.md).
 
+## Distribution stable et documentation développeur
+
+Le Back conserve **Core v1.2.0** et verrouille **Tooling v1.3.0**
+dans `composer.lock`. Cette version Tooling fournit l'assemblage des
+véritables guides développeur au bootstrap et leur reconstruction locale
+après ajout, mise à jour et suppression des modules. Ne pas publier une
+release Back tant que le tag et la GitHub Release Tooling correspondants
+ne sont pas disponibles et que la CI du nouveau lock n'est pas verte.
+
+## Configuration des environnements du projet
+
+Le squelette inclut `.env.example` comme **référence non sensible** des variables usuelles. Chaque projet configure ses valeurs réelles dans `.env.local` ou l'environnement de déploiement ; ces fichiers et les secrets de production ne doivent pas être versionnés. Le Setup Wizard écrit la connexion à la base choisie et son contexte local. L'exemple n'est pas une configuration de production prête à l'emploi.
+
 ## Bilan CT XT multi-SGBD du 11 novembre 2026
 
 Les crash-tests d'installation sur le workspace XT vierge ont abouti avec **PostgreSQL, MySQL, SQLite et MariaDB**. Le parcours validé comprend la création/configuration de la base, l'exécution des migrations natives Doctrine Schema (Admins, Roles, ACLs, Users), la création du premier administrateur, les builds Svelte et le routing. Pour MariaDB, le contrôle SQL a confirmé les tables `doctrine_migration_versions`, `symsvel_acl_rules`, `symsvel_admins`, `symsvel_roles` et `symsvel_users`, ainsi qu'un administrateur activé avec le rôle `ROLE_DEV`. Ne pas publier d'identifiants ni de hashes issus des CT.
