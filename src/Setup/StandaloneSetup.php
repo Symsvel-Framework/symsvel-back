@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Setup;
 
 use SymSvel\Tooling\Installation\SetupState;
+use SymSvel\Tooling\Update\ProjectChannel;
 
 /**
  * Bootstrap HTTP independent from Symfony's Kernel and services.
@@ -152,6 +153,9 @@ final class StandaloneSetup
             if ($repos['bo'] === '') {
                 throw new \InvalidArgumentException('Le dépôt GitHub du BO est obligatoire en production.');
             }
+            // ProjectChannel belongs to backend/.symsvel, not the workspace
+            // SetupState. A fresh Git clone never contains this ignored file.
+            self::prepareProductionChannel($backend);
             (new ProductionEnvironmentWriter())->write($backend, $databaseUrl, $domain, $origins);
             $metadata->save($workspace, $name, $domain);
             $setupConfig->save($workspace, $repos);
@@ -163,6 +167,29 @@ final class StandaloneSetup
         // The established Tooling command owns database creation and migrations.
         self::command($backend, ['symsvel:setup:database', '--no-interaction'], null, 'Préparation de la base');
         self::redirect('/setup/admin');
+    }
+
+    /** Rebuild the private project channel from its committed Composer root constraint. */
+    private static function prepareProductionChannel(string $backend): void
+    {
+        $channelFile = $backend.'/.symsvel/project.json';
+        if (is_link($channelFile) || is_link(dirname($channelFile))) {
+            throw new \RuntimeException('Canal projet symbolique interdit.');
+        }
+        if (is_file($channelFile)) {
+            // Never replace a channel already established for this deployment.
+            ProjectChannel::read($backend);
+            return;
+        }
+        $manifest = json_decode((string) file_get_contents($backend.'/composer.json'), true, 512, JSON_THROW_ON_ERROR);
+        $core = $manifest['require']['symsvel-framework/core'] ?? null;
+        if (!is_string($core) || trim($core) === '') {
+            throw new \RuntimeException('Provenance Core absente du Composer du projet.');
+        }
+        // The project root manifest is the authority; APP_ENV=prod does not
+        // imply stable packages when Choralys is a --dev crash-test.
+        $channel = str_starts_with(trim($core), 'dev-') ? ProjectChannel::DEV : ProjectChannel::STABLE;
+        ProjectChannel::write($backend, $channel);
     }
 
     private static function writeLocalEnvironment(string $backend, string $databaseUrl, string $domain, array $origins): void
