@@ -134,8 +134,7 @@ d'hébergement d'un projet Svelte réellement présent. Cela ne publie
 - L'import est effectué dans une base existante et peut modifier des données.
   Le développeur prépare une sauvegarde avant import ; aucun rollback automatique
   des opérations SQL importées n'est revendiqué.
-- Le domaine et la politique CORS de production doivent correspondre aux URL
-  réellement hébergées, notamment si BO/App/Front résident sur des domaines différents.
+- Le premier écran collecte les **URL réelles des scopes Back, BO, App et Front**, indépendamment des dépôts GitHub et des noms de dossiers. Ainsi, `https://manager.choralys.com` peut être renseigné comme URL de l'App sans renommer le scope `app`. Les URLs BO et App sont utilisées par le module Auth ; les URLs BO, App et Front génèrent les CORS exacts. Les URL optionnelles non renseignées n'autorisent aucune origine supplémentaire. En production, HTTPS est exigé pour les URL renseignées.
 - Le Setup ne crée pas de workflow, de secret GitHub ni d'accès SSH pour le projet.
   Il ne déploie jamais les dépôts officiels SymSvel.
 - L'accès distant `/prod_settings` est fermé lorsque l'état de ce déploiement
