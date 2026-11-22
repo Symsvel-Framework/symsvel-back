@@ -57,7 +57,8 @@ final class SetupController extends AbstractController
         if (!$productionUrl && !in_array($request->getClientIp(), ['127.0.0.1', '::1'], true)) {
             return new Response('Installation accessible uniquement en local.', Response::HTTP_FORBIDDEN);
         }
-        if (($state['status'] ?? null) === 'database_ready'
+        if ((($state['status'] ?? null) === 'database_ready'
+                && (!$productionUrl || (new ProductionSetupConfig())->read($workspace) !== null))
             || ($productionUrl && ($state['status'] ?? null) === 'running'
                 && (new ProductionSetupConfig())->read($workspace) !== null)) {
             return $this->redirectToRoute($productionUrl ? 'symsvel_prod_settings_admin' : 'symsvel_setup_admin');
@@ -86,7 +87,7 @@ final class SetupController extends AbstractController
                 (new ProjectMetadata())->validateLocalDomain($localDomain);
             } catch (\InvalidArgumentException $exception) {
                 $this->addFlash('setup_error', $exception->getMessage());
-                return $this->redirectToRoute('symsvel_setup');
+                return $this->redirectToRoute($productionUrl ? 'symsvel_prod_settings' : 'symsvel_setup');
             }
             try {
                 $url = (new DatabaseConnectionConfig())->buildSelectedUrl(
@@ -100,7 +101,7 @@ final class SetupController extends AbstractController
                 );
             } catch (\InvalidArgumentException|\RuntimeException $exception) {
                 $this->addFlash('setup_error', $exception->getMessage());
-                return $this->redirectToRoute('symsvel_setup');
+                return $this->redirectToRoute($productionUrl ? 'symsvel_prod_settings' : 'symsvel_setup');
             }
             $backend = (string) $this->getParameter('kernel.project_dir');
             if ($productionUrl) {
@@ -174,7 +175,7 @@ final class SetupController extends AbstractController
                 $diagnostic = $this->sanitizeSetupDiagnostic($diagnostic, $url);
                 $this->addFlash('setup_error', 'Préparation de la base échouée (code '.($process->getExitCode() ?? 'inconnu').'). '.($diagnostic !== '' ? $diagnostic : 'La commande n’a fourni aucun diagnostic.'));
 
-                return $this->redirectToRoute('symsvel_setup');
+                return $this->redirectToRoute($productionUrl ? 'symsvel_prod_settings' : 'symsvel_setup');
             }
             return $this->redirectToRoute('symsvel_setup_admin');
         }
@@ -247,7 +248,8 @@ final class SetupController extends AbstractController
             if ($action === 'provision') {
                 if (!$this->provisionAdministrator($request, $backend)) {
                     return $this->redirectToRoute('symsvel_setup_admin');
-                }            } elseif ($action !== 'complete') {
+                }
+            } elseif ($action !== 'complete') {
                 return new Response('Action de setup invalide.', Response::HTTP_BAD_REQUEST);
             }
             // Completion independently verifies the administrator and is safe to retry.
@@ -283,47 +285,45 @@ final class SetupController extends AbstractController
 
     private function provisionAdministrator(Request $request, string $backend): bool
     {
-                $email = (string) $request->request->get('admin_email', '');
-                $password = (string) $request->request->get('admin_password', '');
-                $confirmation = (string) $request->request->get('admin_password_confirmation', '');
-                if (!hash_equals($password, $confirmation)) {
-                    $this->addFlash('setup_error', 'Les mots de passe administrateur ne correspondent pas.');
-                    return false;
-                }
-                try {
-                    (new PendingAdministrator())->validate($email, $password);
-                } catch (\InvalidArgumentException $exception) {
-                    $this->addFlash('setup_error', $exception->getMessage());
-                    return false;
-                }
-                // Migrations and Languages catalog are ready at this phase.
-                // Browser language initializes the site's one immutable primary ISO code.
-                $browserLanguage = strtolower(explode('-', str_replace('_', '-',
-                    (string) ($request->getPreferredLanguage() ?? 'fr')))[0]);
-                if (preg_match('/^[a-z]{2,4}$/D', $browserLanguage) !== 1) {
-                    $browserLanguage = 'fr';
-                }
-                $siteLanguage = new Process([PHP_BINARY, 'bin/console', 'symsvel:languages:bootstrap:stdin', '--no-interaction'], $backend);
-                $siteLanguage->setInput(json_encode(['language' => $browserLanguage], JSON_THROW_ON_ERROR));
-                $siteLanguage->setTimeout(60);
-                $siteLanguage->run();
-                if (!$siteLanguage->isSuccessful()) {
-                    $this->addFlash('setup_error', 'Initialisation de la langue du site impossible. Vérifiez le référentiel Languages et reprenez le Setup.');
-                    return false;
-                }
-                $process = new Process([PHP_BINARY, 'bin/console', 'symsvel:admins:bootstrap:stdin', '--no-interaction'], $backend);
-                $process->setInput(json_encode(['email' => trim($email), 'password' => $password,
-                    'language' => $browserLanguage], JSON_THROW_ON_ERROR));
-                $process->setTimeout(60);
-                $process->run();
-                if (!$process->isSuccessful()) {
-                    $this->addFlash('setup_error', 'Création du premier administrateur impossible. Vérifiez le module Admins et réessayez.');
-                    return false;
-                }
-
+        $email = (string) $request->request->get('admin_email', '');
+        $password = (string) $request->request->get('admin_password', '');
+        $confirmation = (string) $request->request->get('admin_password_confirmation', '');
+        if (!hash_equals($password, $confirmation)) {
+            $this->addFlash('setup_error', 'Les mots de passe administrateur ne correspondent pas.');
+            return false;
+        }
+        try {
+            (new PendingAdministrator())->validate($email, $password);
+        } catch (\InvalidArgumentException $exception) {
+            $this->addFlash('setup_error', $exception->getMessage());
+            return false;
+        }
+        // Migrations and Languages catalog are ready at this phase.
+        // Browser language initializes the site's one immutable primary ISO code.
+        $browserLanguage = strtolower(explode('-', str_replace('_', '-',
+            (string) ($request->getPreferredLanguage() ?? 'fr')))[0]);
+        if (preg_match('/^[a-z]{2,4}$/D', $browserLanguage) !== 1) {
+            $browserLanguage = 'fr';
+        }
+        $siteLanguage = new Process([PHP_BINARY, 'bin/console', 'symsvel:languages:bootstrap:stdin', '--no-interaction'], $backend);
+        $siteLanguage->setInput(json_encode(['language' => $browserLanguage], JSON_THROW_ON_ERROR));
+        $siteLanguage->setTimeout(60);
+        $siteLanguage->run();
+        if (!$siteLanguage->isSuccessful()) {
+            $this->addFlash('setup_error', 'Initialisation de la langue du site impossible. Vérifiez le référentiel Languages et reprenez le Setup.');
+            return false;
+        }
+        $process = new Process([PHP_BINARY, 'bin/console', 'symsvel:admins:bootstrap:stdin', '--no-interaction'], $backend);
+        $process->setInput(json_encode(['email' => trim($email), 'password' => $password,
+            'language' => $browserLanguage], JSON_THROW_ON_ERROR));
+        $process->setTimeout(60);
+        $process->run();
+        if (!$process->isSuccessful()) {
+            $this->addFlash('setup_error', 'Création du premier administrateur impossible. Vérifiez le module Admins et réessayez.');
+            return false;
+        }
         return true;
     }
-
 
     private function finishProduction(Request $request, string $backend, string $workspace, string $status): Response
     {
