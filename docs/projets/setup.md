@@ -8,6 +8,22 @@ symsvel setup
 
 Cette commande permet de reprendre le Wizard après une interruption. La finalisation technique est déléguée à `symsvel setup:finalize` (commande Symfony `symsvel:setup:finalize`). Une interruption du formulaire n'implique pas que les changements déjà effectués dans la base aient été annulés.
 
+## Conservation du Setup pour le premier déploiement (parcours cible)
+
+**Décision de conception :** un projet SymSvel conserve le même Setup après
+son installation locale, afin que le backend publié dans le dépôt Git du
+développeur puisse l'exécuter lors du premier déploiement en production.
+Le Setup terminé est **fermé dans l'environnement courant**, pas supprimé
+du code source. Le projet cloné sur un autre serveur possède un état
+d'initialisation propre et peut sélectionner le mode **Déploiement
+production**. La configuration locale et les secrets ne sont jamais
+versionnés ni réutilisés comme état de production.
+
+Cette extension est **à implémenter et à valider** ; la restriction
+`localhost` décrite ci-dessus reste celle du Setup actuellement déployé.
+Voir le [guide du premier déploiement](premier-deploiement.md), notamment
+les prérequis des CD des dépôts du projet.
+
 ## Périmètre de stabilisation PostgreSQL (novembre 2026)
 
 Le chantier en cours stabilise le Setup en deux phases **sur PostgreSQL uniquement**. La prise en charge de MySQL, MariaDB et SQLite, l'import i18n et la 2FA sont explicitement reportés à leurs chantiers respectifs. L'ADR 0008 décrit la cible multibase, pas les moteurs déjà opérationnels.
