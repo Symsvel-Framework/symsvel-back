@@ -30,6 +30,10 @@ final class StandaloneSetup
         if (!$production && !in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1'], true)) {
             self::abort(403, 'Setup local : accès loopback uniquement.');
         }
+        // Installation/migrations can exceed PHP-FPM's request execution limit.
+        if (function_exists('set_time_limit')) {
+            @set_time_limit(0);
+        }
         $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
         if (!in_array($method, ['GET', 'POST'], true)) {
             header('Allow: GET, POST');
@@ -282,23 +286,28 @@ final class StandaloneSetup
     private static function command(string $backend, array $args, ?string $stdin, string $label): void
     {
         $php = PHP_SAPI === 'cli-server' ? PHP_BINARY : ((string) getenv('SYMSVEL_PHP_CLI') ?: 'php');
-        $process = proc_open(array_merge([$php, 'bin/console'], $args),
-            [['pipe', 'r'], ['pipe', 'w'], ['pipe', 'w']], $pipes, $backend);
-        if (!is_resource($process)) {
-            throw new \RuntimeException($label.' : commande indisponible.');
+        // Child commands can print more than a pipe buffer. A private temporary
+        // output file avoids blocking FPM while we wait for their completion.
+        $log = tempnam(sys_get_temp_dir(), 'symsvel-setup-command-');
+        if ($log === false) {
+            throw new \RuntimeException($label.' : sortie de commande indisponible.');
         }
-        if ($stdin !== null) {
-            fwrite($pipes[0], $stdin);
-        }
-        fclose($pipes[0]);
-        // Read output without displaying secrets or CLI internals in the public wizard.
-        $stdout = stream_get_contents($pipes[1]);
-        $stderr = stream_get_contents($pipes[2]);
-        fclose($pipes[1]);
-        fclose($pipes[2]);
-        if (proc_close($process) !== 0) {
-            error_log('SymSvel native setup command failed: '.$label.' (no sensitive output logged)');
-            throw new \RuntimeException($label.' échouée. Consultez les journaux du serveur, puis reprenez le Setup.');
+        try {
+            $process = proc_open(array_merge([$php, 'bin/console'], $args),
+                [0 => ['pipe', 'r'], 1 => ['file', $log, 'w'], 2 => ['redirect', 1]], $pipes, $backend);
+            if (!is_resource($process)) {
+                throw new \RuntimeException($label.' : commande indisponible.');
+            }
+            if ($stdin !== null) {
+                fwrite($pipes[0], $stdin);
+            }
+            fclose($pipes[0]);
+            if (proc_close($process) !== 0) {
+                error_log('SymSvel native setup command failed: '.$label.' (no sensitive output logged)');
+                throw new \RuntimeException($label.' échouée. Consultez les journaux du serveur, puis reprenez le Setup.');
+            }
+        } finally {
+            @unlink($log);
         }
     }
 
