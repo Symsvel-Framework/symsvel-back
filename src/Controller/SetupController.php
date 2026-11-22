@@ -7,7 +7,7 @@ namespace App\Controller;
 use App\Setup\DatabaseConnectionConfig;
 use App\Setup\PendingAdministrator;
 use App\Setup\ProjectMetadata;
-use App\Setup\LocalCorsOrigins;
+use App\Setup\ProjectUrlMapping;
 use App\Setup\ProductionSetupConfig;
 use App\Setup\ProductionEnvironmentWriter;
 use App\Setup\ProductionDumpImporter;
@@ -103,6 +103,16 @@ final class SetupController extends AbstractController
                 $this->addFlash('setup_error', $exception->getMessage());
                 return $this->redirectToRoute($productionUrl ? 'symsvel_prod_settings' : 'symsvel_setup');
             }
+            $submittedOrigins = [];
+            foreach (['back', 'bo', 'app', 'front'] as $scope) {
+                $submittedOrigins[$scope] = (string) $request->request->get('origin_'.$scope, '');
+            }
+            try {
+                $origins = (new ProjectUrlMapping())->normalize($submittedOrigins, $productionUrl);
+            } catch (\InvalidArgumentException $exception) {
+                $this->addFlash('setup_error', $exception->getMessage());
+                return $this->redirectToRoute($productionUrl ? 'symsvel_prod_settings' : 'symsvel_setup');
+            }
             $backend = (string) $this->getParameter('kernel.project_dir');
             if ($productionUrl) {
                 try {
@@ -114,7 +124,7 @@ final class SetupController extends AbstractController
                     foreach ($repositories as $urlToCheck) {
                         (new ProductionSetupConfig())->normalizeRepository($urlToCheck);
                     }
-                    (new ProductionEnvironmentWriter())->write($backend, $url, $localDomain);
+                    (new ProductionEnvironmentWriter())->write($backend, $url, $localDomain, $origins);
                     (new ProductionSetupConfig())->save($workspace, $repositories);
                 } catch (\Throwable $exception) {
                     $this->addFlash('setup_error', 'Configuration production impossible : '.$exception->getMessage());
@@ -131,11 +141,13 @@ final class SetupController extends AbstractController
                 }
                 $existing = is_file($envFile) ? (string) file_get_contents($envFile) : '';
                 $lines = preg_split('/\r\n|\n|\r/', $existing) ?: [];
-                $lines = array_values(array_filter($lines, static fn (string $line): bool => preg_match('/^\s*(?:DATABASE_URL|SYMSVEL_CORS_ALLOW_ORIGIN|SYMSVEL_BO_DOMAIN)\s*=/', $line) !== 1));
+                $lines = array_values(array_filter($lines, static fn (string $line): bool => preg_match('/^\s*(?:DATABASE_URL|SYMSVEL_CORS_ALLOW_ORIGIN|SYMSVEL_BO_DOMAIN|SYMSVEL_(?:BACK|BO|APP|FRONT)_ORIGIN)\s*=/', $line) !== 1));
                 $lines[] = 'DATABASE_URL='.json_encode($url, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
-                $lines[] = 'SYMSVEL_CORS_ALLOW_ORIGIN='.json_encode((new LocalCorsOrigins())->fromDomain($localDomain), JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
-                // This public hostname must be readable by PHP-FPM, unlike private CLI Setup metadata.
-                $lines[] = 'SYMSVEL_BO_DOMAIN='.json_encode(strtolower(trim($localDomain)), JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
+                // Explicit scope => origin mapping is the only source of CORS,
+                // independently of directory names or conventional subdomains.
+                foreach ((new ProjectUrlMapping())->environment($origins, $localDomain) as $name => $value) {
+                    $lines[] = $name.'='.json_encode($value, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
+                }
                 $contents = implode("\n", $lines)."\n";
                 $temporary = tempnam($backend, '.env-local-');
                 if ($temporary === false) {
