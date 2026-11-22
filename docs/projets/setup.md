@@ -1,3 +1,40 @@
+## Bootstrap natif (refonte du 22/11/2026, branche de travail)
+
+**Le premier écran d'installation ne démarre plus Symfony.**
+`public/index.php` intercepte `/setup` et `/prod_settings` (ainsi que
+leur page `/admin`) puis exécute le wizard PHP autonome
+`src/Setup/StandaloneSetup.php`.
+
+Ce wizard utilise Composer uniquement pour charger les classes PHP et les
+validateurs déjà présents ; il appelle les commandes Symfony CLI/Tooling
+**après** avoir enregistré un `.env.local` fonctionnel avec un
+`APP_SECRET` aléatoire. Le code historique de `SetupController` et les
+Twig associés sont remplacés, sans changer la CLI d'entrée `symsvel setup`.
+
+Le runtime HTTP reste en 503 jusqu'à `.symsvel/setup.json: completed`.
+L'accès aux pages Setup locales reste limité au loopback ; le Setup prod
+reste limité à la première installation de ce serveur. Les formulaires ont
+un jeton CSRF de session PHP. Le Setup prod utilise le même flux que la
+version locale, sauf pour le choix migrations/dump et le déclenchement
+Github Actions via PAT temporaire.
+
+**Nettoyage production uniquement :** après état `completed`, le wizard
+supprime son propre fichier natif de ce checkout du VPS. La réinstallation
+du fichier par une future mise à jour Git n'autorise pas un deuxième Setup,
+car le verrou d'état est indépendant. Ni les sources locales ni les dépôts
+GitHub ne sont modifiés par le nettoyage serveur.
+
+Le fichier `.env` du squelette est volontairement minimal et **ne
+contient aucune configuration de production**. La configuration opérationnelle
+vient de `.env.local`. Les tests historiques précédant le 22/11 restent
+dans la documentation à titre de suivi, pas comme instructions actives.
+
+**Validation requise :** CI native, CT CLI local, clone vierge sur VPS,
+création de la BDD/admin et déclenchement des trois CD Choralys.
+Voir [l'ADR 0011](../adr/0011-bootstrap-php-natif.md).
+
+---
+
 # Setup Wizard
 
 Le Setup Wizard est lancé après la création des composants par la CLI. Il est accessible **uniquement en local** pendant la phase d'installation ; son contrôleur vérifie l'adresse du client, l'état `.symsvel/setup.json`, les permissions d'écriture et le jeton CSRF des formulaires.

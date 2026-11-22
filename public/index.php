@@ -18,7 +18,10 @@ if (in_array($path, ['/setup', '/setup/admin', '/prod_settings', '/prod_settings
 }
 
 // Never expose the default dev environment before the first setup.
-if (!is_file($backend.'/.env.local') || is_link($backend.'/.env.local')) {
+$stateFile = dirname($backend).'/.symsvel/setup.json';
+$state = is_file($stateFile) && !is_link($stateFile) ? json_decode((string) file_get_contents($stateFile), true) : null;
+if (!is_file($backend.'/.env.local') || is_link($backend.'/.env.local')
+    || !is_array($state) || ($state['status'] ?? null) !== 'completed') {
     http_response_code(503);
     header('Content-Type: text/plain; charset=UTF-8');
     header('Cache-Control: no-store');

@@ -1,3 +1,23 @@
+## Installation initiale après la refonte PHP native (22/11/2026)
+
+Parcours cible : `git clone` du Backend dans son document root, puis
+`composer install`, puis ouverture du wizard
+`https://api.choralys.com/prod_settings`. Le wizard fonctionne sans
+booter Symfony et crée une configuration sécurisée dans `.env.local`
+avant d'utiliser les commandes CLI/Tooling. Le second écran propose
+migrations/admin **ou** dump SQL, et déclenche les CD `deploy.yml`
+depuis un PAT Actions:write fourni ponctuellement.
+
+Le bootstrap source est supprimé **sur le VPS seulement** après succès.
+La clôture par `.symsvel/setup.json` empêche la réouverture après
+`git pull`. Les fichiers privés restent hors Git. Le HTTP 503 hors Setup
+est attendu tant que la finalisation n'est pas terminée.
+
+**État du chantier :** branche draft, CI + CT Choralys à valider. Ne pas
+interpréter ces éléments comme une certification du déploiement.
+
+---
+
 # Premier déploiement d'un projet SymSvel
 
 > **Statut : première implémentation sur `dev`, validation en cours.**

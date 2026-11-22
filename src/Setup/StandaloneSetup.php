@@ -297,7 +297,7 @@ final class StandaloneSetup
         fclose($pipes[1]);
         fclose($pipes[2]);
         if (proc_close($process) !== 0) {
-            error_log('SymSvel native setup command failed: '.$label.' '.substr($stderr ?: $stdout, 0, 800));
+            error_log('SymSvel native setup command failed: '.$label.' (no sensitive output logged)');
             throw new \RuntimeException($label.' échouée. Consultez les journaux du serveur, puis reprenez le Setup.');
         }
     }
