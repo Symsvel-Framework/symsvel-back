@@ -10,7 +10,7 @@ Cette commande permet de reprendre le Wizard après une interruption. La finalis
 
 ## Conservation du Setup pour le premier déploiement (parcours cible)
 
-**Décision de conception :** un projet SymSvel conserve le même Setup après
+**Décision de conception, première implémentation sur `dev` :** un projet SymSvel conserve le même Setup après
 son installation locale, afin que le backend publié dans le dépôt Git du
 développeur puisse l'exécuter lors du premier déploiement en production.
 Le Setup terminé est **fermé dans l'environnement courant**, pas supprimé
@@ -19,10 +19,25 @@ d'initialisation propre et peut sélectionner le mode **Déploiement
 production**. La configuration locale et les secrets ne sont jamais
 versionnés ni réutilisés comme état de production.
 
-Cette extension est **à implémenter et à valider** ; la restriction
-`localhost` décrite ci-dessus reste celle du Setup actuellement déployé.
+Cette extension est **implémentée sur `dev`, mais doit être validée en CI et
+par crash-test Choralys sur VPS**. `/setup` reste limité à la machine locale.
+Le point d'entrée `/prod_settings` est accessible sur le serveur distant
+tant que sa propre initialisation est incomplète. L'état absent après un
+clone neuf y est initialisé sans copier l'état local. Une fois le Setup fini,
+l'accès se ferme, mais le code demeure dans le dépôt.
+
+Le premier écran de production configure `backend/.env.local` et sa copie
+privée dans `secrets/.env` puis propose les URL des dépôts d'interfaces
+appartenant **au projet utilisateur**. Le second choisit migrations Doctrine
+avec création du premier administrateur ou import d'un dump SQL texte avec
+administrateur déjà présent. La branche locale conserve son parcours initial.
+
+Le déclenchement facultatif de la CD utilise `deploy.yml` sur `main` dans
+les dépôts utilisateur, avec un jeton GitHub saisi ponctuellement.
+L'acceptation par GitHub ne garantit pas la publication. Sans CD, le
+développeur déploiera les builds et les documentations plus tard.
 Voir le [guide du premier déploiement](premier-deploiement.md), notamment
-les prérequis des CD des dépôts du projet.
+les limites de `composer install`, du client SQL et des hébergements distincts.
 
 ## Périmètre de stabilisation PostgreSQL (novembre 2026)
 
