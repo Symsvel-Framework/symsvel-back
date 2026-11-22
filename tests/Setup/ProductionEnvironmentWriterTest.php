@@ -15,19 +15,29 @@ final class ProductionEnvironmentWriterTest extends TestCase
         mkdir($root);
         mkdir($root.'/backend');
         try {
+            $origins = [
+                'back' => 'https://backend.choralys.com',
+                'bo' => 'https://bo.choralys.com',
+                'app' => 'https://manager.choralys.com',
+                'front' => 'https://www.choralys.com',
+            ];
             $writer = new ProductionEnvironmentWriter();
-            $writer->write($root.'/backend', 'postgresql://db:pass@localhost:5432/site', 'bo.example.fr');
+            $writer->write($root.'/backend', 'postgresql://db:pass@localhost:5432/site', 'choralys.com', $origins);
             $envFile = $root.'/backend/.env.local';
             $secretsFile = $root.'/secrets/.env';
             $initial = (string) file_get_contents($envFile);
             self::assertSame($initial, file_get_contents($secretsFile));
             self::assertStringContainsString('APP_ENV="prod"', $initial);
+            self::assertStringContainsString('SYMSVEL_APP_ORIGIN="https://manager.choralys.com"', $initial);
+            self::assertStringContainsString('SYMSVEL_BO_ORIGIN="https://bo.choralys.com"', $initial);
+            self::assertStringContainsString('SYMSVEL_BACK_ORIGIN="https://backend.choralys.com"', $initial);
+            self::assertStringContainsString('SYMSVEL_FRONT_ORIGIN="https://www.choralys.com"', $initial);
             self::assertStringContainsString('DATABASE_URL="postgresql://db:pass@localhost:5432/site"', $initial);
             self::assertMatchesRegularExpression('/APP_SECRET="[0-9a-f]{64}"/', $initial);
             self::assertSame(0600, fileperms($envFile) & 0777);
             self::assertSame(0600, fileperms($secretsFile) & 0777);
 
-            $writer->write($root.'/backend', 'postgresql://db:changed@localhost:5432/site', 'bo.example.fr');
+            $writer->write($root.'/backend', 'postgresql://db:changed@localhost:5432/site', 'choralys.com', $origins);
             $updated = (string) file_get_contents($envFile);
             preg_match('/APP_SECRET="[0-9a-f]{64}"/', $initial, $one);
             preg_match('/APP_SECRET="[0-9a-f]{64}"/', $updated, $two);
