@@ -223,10 +223,19 @@ final class StandaloneSetup
                 self::provision($backend);
             }
             self::command($backend, ['symsvel:admins:bootstrap:verify', '--no-interaction'], null, 'Vérification administrateur');
-            $messages = (new ProductionCdDispatcher())->dispatch(
-                (new ProductionSetupConfig())->read($workspace) ?? [],
-                (string) ($_POST['github_token'] ?? ''),
-            );
+            $repositories = (new ProductionSetupConfig())->read($workspace) ?? [];
+            $configured = array_filter($repositories, static fn (string $url): bool => $url !== '');
+            $token = trim((string) ($_POST['github_token'] ?? ''));
+            if ($configured !== [] && $token === '') {
+                throw new \RuntimeException('Jeton GitHub Actions:write requis pour déclencher les CD des interfaces.');
+            }
+            $messages = (new ProductionCdDispatcher())->dispatch($repositories, $token);
+            // A rejected dispatch is retryable, without recreating the database.
+            // GitHub's 204 only confirms queuing, not a successful publication.
+            if ($configured !== [] && (count($messages) !== count($configured)
+                || array_any($messages, static fn (string $message): bool => !str_contains($message, ' : CD demandée à GitHub')))) {
+                throw new \RuntimeException('Une CD GitHub a refusé le déclenchement. Le Setup reste ouvert pour une reprise.');
+            }
             (new SetupState())->transition($workspace, SetupState::DATABASE_READY, SetupState::COMPLETED);
             // Remove the native setup code only from this deployed production checkout.
             // The persistent completed state also prevents reopening after a future git pull.
@@ -387,8 +396,11 @@ final class StandaloneSetup
         $body .= '<button type="submit">Finaliser</button></form>';
         if ($status === SetupState::DATABASE_READY) {
             $body .= '<form method="post"><input type="hidden" name="_token" value="'.$csrf.'">'
-                .'<input type="hidden" name="setup_action" value="complete">'
-                .'<button type="submit">Reprendre la finalisation sans réinitialiser la base</button></form>';
+                .'<input type="hidden" name="setup_action" value="complete">';
+            if ($production) {
+                $body .= self::input('PAT Actions:write pour relancer les CD', 'github_token', '', false, 'password');
+            }
+            $body .= '<button type="submit">Reprendre la finalisation sans réinitialiser la base</button></form>';
         }
         if ($production) {
             $body .= '<script>(()=>{const radios=document.querySelectorAll("input[name=setup_action]");'
