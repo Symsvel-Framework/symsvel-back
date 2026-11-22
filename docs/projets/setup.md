@@ -87,7 +87,13 @@ Les crash-tests d'installation sur le workspace XT vierge ont abouti avec **Post
 
 ### Origines CORS locales
 
-À la première phase, le Setup inscrit aussi `SYMSVEL_CORS_ALLOW_ORIGIN` dans `backend/.env.local` à partir du domaine local validé. La regex autorise uniquement les origines `<domaine>`, `www.<domaine>`, `bo.<domaine>` et `app.<domaine>` en HTTP ou HTTPS, avec port optionnel pour les serveurs de développement. Le Setup remplace l'ancienne valeur de cette variable sans la dupliquer lors d'une reprise. La politique CORS de production doit être définie séparément.
+Depuis le mapping d'URL du Setup (`dev`, 22/11/2026), le premier écran associe les **scopes logiques** Back, BO, App et Front à leurs **origines HTTP(S) réelles**. Les champs sont proposés avec les sous-domaines conventionnels, mais restent entièrement modifiables ; App peut par exemple être `https://manager.choralys.com`. App et Front peuvent rester vides s'ils ne sont pas installés. Ce mapping **ne renomme aucun dossier** et ne dépend pas de la localisation des hébergements.
+
+Le Setup publie `SYMSVEL_BACK_ORIGIN`, `SYMSVEL_BO_ORIGIN`, `SYMSVEL_APP_ORIGIN`, `SYMSVEL_FRONT_ORIGIN` dans `backend/.env.local`. La valeur `SYMSVEL_CORS_ALLOW_ORIGIN` est générée à partir des **seules origines BO, App et Front renseignées**, avec comparaison exacte de protocole, hôte et port, sans joker de sous-domaine. Le Back étant le serveur API recevant les requêtes, son origine n'est pas ajoutée à la liste CORS. En production, chaque origine déclarée doit utiliser HTTPS.
+
+Les origines BO et App alimentent également le contrat natif du module Auth (contrôle de l'origine du navigateur BO et liens d'activation/invitation). En local, l'HTTP est accepté uniquement dans les conditions de développement déjà prévues par Auth. La valeur historique `SYMSVEL_BO_DOMAIN` est conservée pour compatibilité, mais les origines explicites du mapping ont priorité.
+
+Le Setup remplace ses variables générées sans doublons lors d'une nouvelle saisie. Le mapping est une **configuration d'environnement**, jamais une découverte DNS ou une configuration des dépôts Git/CD. Validation : tests automatisés et crash-test Choralys local puis VPS.
 
 ## CT XT : résolution des dépendances Mails en canal dev (16/11/2026)
 
