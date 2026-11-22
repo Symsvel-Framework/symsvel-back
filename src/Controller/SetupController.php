@@ -283,8 +283,9 @@ final class SetupController extends AbstractController
         return $this->render('setup/admin.html.twig', ['production' => false]);
     }
 
-    private function provisionAdministrator(Request $request, string $backend): bool
+    private function provisionAdministrator(Request $request, string $backend, ?string $php = null): bool
     {
+        $php ??= PHP_BINARY;
         $email = (string) $request->request->get('admin_email', '');
         $password = (string) $request->request->get('admin_password', '');
         $confirmation = (string) $request->request->get('admin_password_confirmation', '');
@@ -305,7 +306,7 @@ final class SetupController extends AbstractController
         if (preg_match('/^[a-z]{2,4}$/D', $browserLanguage) !== 1) {
             $browserLanguage = 'fr';
         }
-        $siteLanguage = new Process([PHP_BINARY, 'bin/console', 'symsvel:languages:bootstrap:stdin', '--no-interaction'], $backend);
+        $siteLanguage = new Process([$php, 'bin/console', 'symsvel:languages:bootstrap:stdin', '--no-interaction'], $backend);
         $siteLanguage->setInput(json_encode(['language' => $browserLanguage], JSON_THROW_ON_ERROR));
         $siteLanguage->setTimeout(60);
         $siteLanguage->run();
@@ -313,7 +314,7 @@ final class SetupController extends AbstractController
             $this->addFlash('setup_error', 'Initialisation de la langue du site impossible. Vérifiez le référentiel Languages et reprenez le Setup.');
             return false;
         }
-        $process = new Process([PHP_BINARY, 'bin/console', 'symsvel:admins:bootstrap:stdin', '--no-interaction'], $backend);
+        $process = new Process([$php, 'bin/console', 'symsvel:admins:bootstrap:stdin', '--no-interaction'], $backend);
         $process->setInput(json_encode(['email' => trim($email), 'password' => $password,
             'language' => $browserLanguage], JSON_THROW_ON_ERROR));
         $process->setTimeout(60);
@@ -338,10 +339,12 @@ final class SetupController extends AbstractController
             return new Response('Initialisation de la base nécessaire.', Response::HTTP_BAD_REQUEST);
         }
         try {
+            // Under PHP-FPM, PHP_BINARY can be the FPM daemon rather than php-cli.
+            $cliPhp = $this->productionPhpBinary();
             if ($status === SetupState::RUNNING) {
                 if ($action === 'doctrine') {
                     // Reuse exactly the local database/migrations orchestrator.
-                    $process = new Process([PHP_BINARY, 'bin/console', 'symsvel:setup:database', '--no-interaction'], $backend);
+                    $process = new Process([$cliPhp, 'bin/console', 'symsvel:setup:database', '--no-interaction'], $backend);
                     $process->setTimeout(null);
                     $process->run();
                     if (!$process->isSuccessful()) {
@@ -367,10 +370,10 @@ final class SetupController extends AbstractController
                     (new SetupState())->transition($workspace, SetupState::RUNNING, SetupState::DATABASE_READY);
                 }
             }
-            if ($action === 'doctrine' && !$this->provisionAdministrator($request, $backend)) {
+            if ($action === 'doctrine' && !$this->provisionAdministrator($request, $backend, $cliPhp)) {
                 return $this->redirectToRoute('symsvel_prod_settings_admin');
             }
-            $verify = new Process([PHP_BINARY, 'bin/console', 'symsvel:admins:bootstrap:verify', '--no-interaction'], $backend);
+            $verify = new Process([$cliPhp, 'bin/console', 'symsvel:admins:bootstrap:verify', '--no-interaction'], $backend);
             $verify->setTimeout(60);
             $verify->run();
             if (!$verify->isSuccessful()) {
@@ -384,6 +387,15 @@ final class SetupController extends AbstractController
         $repositories = (new ProductionSetupConfig())->read($workspace) ?? [];
         $messages = (new ProductionCdDispatcher())->dispatch($repositories, (string) $request->request->get('github_token', ''));
         return $this->render('setup/finished.html.twig', ['messages' => $messages]);
+    }
+
+    private function productionPhpBinary(): string
+    {
+        if (in_array(PHP_SAPI, ['cli', 'cli-server'], true)) {
+            return PHP_BINARY;
+        }
+        $configured = getenv('SYMSVEL_PHP_CLI');
+        return is_string($configured) && trim($configured) !== '' ? trim($configured) : 'php';
     }
 
 }
