@@ -57,3 +57,8 @@ Un dépôt BO est obligatoire en production. Si les dépôts d'interfaces sont
 renseignés, le PAT Actions:write doit permettre à GitHub d'accepter
 tous les `workflow_dispatch`, sinon le Setup reste reprenable à la phase 2.
 Le `completed` est écrit après acceptation et non après simple tentative.
+
+Le clone de production ne contient pas le registre privé
+backend/.symsvel/project.json. Le bootstrap recrée son canal depuis
+la contrainte Core du composer.json versionné, sans inférer ce canal
+depuis APP_ENV. Un éventuel registre déjà présent est préservé.
