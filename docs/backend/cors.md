@@ -1,36 +1,73 @@
-# CORS et OpenAPI
+# CORS et origines du projet
 
-`SYMSVEL_CORS_ALLOW_ORIGIN` configure les origines autorisées. En développement, localhost et 127.0.0.1 peuvent être acceptés avec ports optionnels ; en production, configurer explicitement les origines attendues.
+SymSvel utilise NelmioCorsBundle pour les endpoints `/api` et `/apibo`.
+Le Back est la cible de ces appels, tandis que les interfaces BO, App
+et Front sont les origines navigateur à autoriser.
 
-CORS concerne les espaces `/api` et `/apibo`, y compris les requêtes préliminaires `OPTIONS`. Ne pas ouvrir toutes les origines sans contrôle.
+## Mapping des URL au Setup (22/11/2026)
 
-Avant livraison d'un endpoint, vérifier OpenAPI JSON et Swagger UI, les schémas des réponses, les préflights autorisés/refusés et les tests HTTP.
+Le premier écran du Setup local et du premier déploiement production associe
+quatre **scopes logiques** à leurs URL réelles :
 
-Lors du Setup local, le domaine saisi (par exemple `xt.local`) produit automatiquement dans `backend/.env.local` une expression régulière pour `http`/`https` pour le domaine racine et les sous-domaines `www`, `bo`, `app` (ports de développement optionnels). Exemple : `^https?://(?:(?:bo|app|www)\\.)?xt\\.local(?::[0-9]+)?# CORS et OpenAPI
+| Scope | Exemple | Rôle |
+| --- | --- | --- |
+| `back` | `https://api.choralys.com` | API cible, non ajoutée aux CORS |
+| `bo` | `https://admin.choralys.com` | Origine BO |
+| `app` | `https://manager.choralys.com` | Origine App |
+| `front` | `https://www.choralys.com` | Origine Front |
 
-`SYMSVEL_CORS_ALLOW_ORIGIN` configure les origines autorisées. En développement, localhost et 127.0.0.1 peuvent être acceptés avec ports optionnels ; en production, configurer explicitement les origines attendues.
+Ces URL sont **des exemples** ; seul `manager.choralys.com` est le cas
+Choralys explicitement prévu. Les autres sont à saisir selon l'hébergement
+réel. Aucune convention `app.<domaine>` n'est imposée et aucun dossier
+physique n'est renommé. App et Front peuvent rester vides s'ils ne sont
+pas installés.
 
-CORS concerne les espaces `/api` et `/apibo`, y compris les requêtes préliminaires `OPTIONS`. Ne pas ouvrir toutes les origines sans contrôle.
+Les URL doivent être des origines HTTP(S) sans chemin, query string,
+userinfo ou fragment. HTTPS est requis pour les URL renseignées en production.
+En local, l'HTTP est autorisé pour les serveurs de développement.
 
-Avant livraison d'un endpoint, vérifier OpenAPI JSON et Swagger UI, les schémas des réponses, les préflights autorisés/refusés et les tests HTTP.
+Le Setup publie dans `backend/.env.local` :
 
-Lors du Setup local, le domaine saisi (par exemple `xt.local`) produit automatiquement dans `backend/.env.local` une expression régulière pour `http`/`https` pour le domaine racine et les sous-domaines `www`, `bo`, `app` (ports de développement optionnels). . Les origines étrangères, notamment `backend` et les sous-domaines arbitraires, restent interdites. La configuration de production reste explicite et indépendante.
+- `SYMSVEL_BACK_ORIGIN`, `SYMSVEL_BO_ORIGIN`, `SYMSVEL_APP_ORIGIN` et
+  `SYMSVEL_FRONT_ORIGIN` : le mapping explicite des URL ;
+- `SYMSVEL_CORS_ALLOW_ORIGIN` : expression régulière générée **uniquement**
+  à partir des origines BO, App et Front renseignées ;
+- `SYMSVEL_BO_DOMAIN` : domaine historique conservé comme fallback pour
+  les anciennes versions d'Auth.
 
-## Cookie de renouvellement BO (16/11/2026)
+Le filtrage CORS compare exactement schéma, hôte et port. Il ne permet
+ni variantes de sous-domaines ni ports non déclarés. Un scope absent
+n'autorise aucune origine supplémentaire. Le fichier `.env.local` est
+propre à chaque installation et ne doit jamais être versionné avec des secrets.
 
-Le transport navigateur BO utilise `POST /apibo/auth/browser/{login,refresh,logout}` sur le domaine backend HTTPS avec `credentials: include`. Le cookie refresh `__Host-symsvel-bo-refresh` est `Secure`, `HttpOnly`, `SameSite=Strict`, `Path=/`, sans Domain ; l'access token reste uniquement en mémoire et les contrôleurs CRUD continuent de recevoir un Bearer. L'origine BO exacte est vérifiée côté module Auth depuis `.symsvel/project.json` enregistré au Setup (`https://bo.<local_domain>`) ou depuis l'override explicite `SYMSVEL_BO_ORIGIN` pour l'hébergement. Les autres endpoints `/apibo` et `/api` gardent `allow_credentials: false` ; seul le chemin `^/apibo/auth/browser(?:/|$)` active les credentials sur les POST et préflights. Les origines générales permises par `SYMSVEL_CORS_ALLOW_ORIGIN` sont un filtrage CORS additionnel, pas un substitut à la validation stricte `Origin` d'Auth. Aucune opération sensible ne doit se baser uniquement sur la présence du cookie.
+## Authentification navigateur BO
 
-CT requis : navigateur sur HTTPS, réponse `Access-Control-Allow-Credentials: true` exclusivement pour le nouveau chemin, en-tête `Origin` imposé, authentification/rechargement/rotation/logout, comportement des cookies tiers (BO et backend doivent être same-site) et refus des origines étrangères. Les tests automatisés de configuration ne remplacent pas ces vérifications.
+Le transport navigateur BO utilise
+`POST /apibo/auth/browser/{login,refresh,logout}`.
+Le module Auth vérifie séparément l'en-tête `Origin` :
+`SYMSVEL_BO_ORIGIN` prime sur le domaine historique. Les URL
+d'invitation et d'activation App utilisent `SYMSVEL_APP_ORIGIN`
+lorsqu'elle est déclarée.
 
+Le cookie de renouvellement de production est
+`__Host-symsvel-bo-refresh` (`Secure`, `HttpOnly`, `SameSite=Strict`,
+`Path=/`, sans attribut Domain).
+Seul le chemin `^/apibo/auth/browser(?:/|$)` active
+`allow_credentials: true` ; les autres routes restent à `false`.
+L'access token est conservé en mémoire par le navigateur.
 
-### Exception de développement local (16/11/2026)
+En développement local, Auth peut accepter une origine BO HTTP explicite
+seulement pour un hôte de développement réservé (`.localhost`, `.local`,
+`.test`) ou un accès réellement loopback, sur une requête non HTTPS.
+Le cookie local n'est pas marqué Secure ; il reste host-only et HttpOnly.
+Ce traitement n'est jamais autorisé en production.
 
-Lorsque le BO et le backend sont tous les deux en HTTP local et que le Setup a enregistré un domaine réservé (*.localhost, *.local ou *.test), le module Auth accepte exclusivement l'origine http://bo.<local_domain> en environnement Symfony dev (port de développement facultatif). Le cookie de renouvellement est alors `symsvel-bo-refresh-local`, `HttpOnly`, `SameSite=Strict`, sans attribut `Secure` ni `Domain`. En HTTPS, le cookie normal `__Host-symsvel-bo-refresh` demeure `Secure` et host-only. Cette exception n'existe **jamais** en production ni sur les domaines publics, et ne change pas la restriction CORS qui demeure propre à `/apibo/auth/browser`.
+## Validation
 
-## Configuration runtime du domaine BO (16/11/2026)
+Les CORS ne remplacent ni l'authentification ni le contrôle d'origine propre
+au module Auth. Les tests doivent couvrir un préflight autorisé et refusé,
+une requête avec credentials BO, le refus d'une origine étrangère, la
+connexion/rotation/logout et les liens d'invitation App sur le domaine mappé.
 
-Le Setup continue de conserver le domaine du projet dans le fichier privé `<workspace>/.symsvel/project.json`, qui appartient à la CLI (permissions restreintes). Les processus web ne doivent **jamais** lire ce fichier. Lors de la configuration initiale, `SetupController` publie désormais `SYMSVEL_BO_DOMAIN="<local_domain>"` dans `backend/.env.local`, en plus de `DATABASE_URL` et `SYMSVEL_CORS_ALLOW_ORIGIN`. Le domaine est préalablement validé par `ProjectMetadata::validateLocalDomain()` et normalisé en minuscules. Il ne contient aucun secret ni origine issue des en-têtes HTTP.
-
-`Auth/TrustedBoOrigin` consomme cette variable de configuration Symfony pour vérifier strictement l'en-tête `Origin` du navigateur BO. Le paramètre `SYMSVEL_BO_ORIGIN` reste un override HTTPS exact pour les déploiements personnalisés. Le CORS général ne suffit pas à autoriser une opération sensible : Auth doit valider l'origine sur ses trois endpoints navigateur.
-
-Pour un projet XT déjà initialisé avant cet ajout, le Tooling actualisé publie la même variable pendant `symsvel:module:sync --source=composer`, qui est invoqué via `symsvel update`. Il conserve les autres variables, les permissions existantes de `.env.local` et le caractère privé du répertoire CLI. Le CT doit confirmer la connexion et le renouvellement de session depuis un navigateur réellement servi par PHP-FPM/Apache sous son utilisateur propre, puis le refus des origines étrangères.
+Les CI Back et Auth, puis les crash-tests Choralys en local et sur le VPS,
+sont nécessaires avant de déclarer le comportement validé.
