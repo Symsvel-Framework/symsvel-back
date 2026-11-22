@@ -8,7 +8,16 @@
 1. Créer les sous-domaines du projet (backend, BO et, selon le projet, App et Front).
 2. Créer leurs répertoires cibles si l'hébergeur ne les crée pas automatiquement.
 3. Se connecter à l'hébergement en SSH, se placer dans le répertoire backend,
-   cloner **son dépôt applicatif backend**, puis exécuter `composer install`.
+   cloner **son dépôt applicatif backend dans le dossier courant**, puis exécuter `composer install`.
+
+   ```bash
+   cd /chemin/vers/backend
+   git clone https://github.com/compte/monProjetBack.git .
+   composer install
+   ```
+
+   Le point final de `git clone` évite de créer un sous-dossier supplémentaire.
+   La racine HTTP du domaine backend doit viser `backend/public/`.
 4. Ouvrir `https://backend.domaine.tld/prod_settings` dans le navigateur.
    Le même Wizard propose les modes **Installation locale** et **Déploiement production**.
    Le Setup est conservé dans le code versionné du projet ; seul son **état** est propre à chaque installation.
