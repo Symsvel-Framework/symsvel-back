@@ -136,6 +136,9 @@ final class StandaloneSetup
             foreach (['bo', 'app', 'front'] as $scope) {
                 $repos[$scope] = $setupConfig->normalizeRepository((string) ($_POST['repo_'.$scope] ?? ''));
             }
+            if ($repos['bo'] === '') {
+                throw new \InvalidArgumentException('Le dépôt GitHub du BO est obligatoire en production.');
+            }
             (new ProductionEnvironmentWriter())->write($backend, $databaseUrl, $domain, $origins);
             $metadata->save($workspace, $name, $domain);
             $setupConfig->save($workspace, $repos);
