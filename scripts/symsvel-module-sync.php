@@ -36,8 +36,12 @@ foreach (['bo', 'app', 'front'] as $scope) {
         continue;
     }
     if (!is_file($directory.'/package.json')) {
-        fwrite(STDERR, "Invalid Svelte component: ".$scope." (package.json missing).\n");
-        exit(1);
+        // Hosting providers can pre-create BO/App/Front document roots before
+        // any interface has been deployed. Their presence is not proof that a
+        // Svelte component exists. The dedicated local finalizer still rejects
+        // an incomplete component when building an actual local installation.
+        echo 'SymSvel: '.strtoupper($scope)." has no Svelte sources yet; skipping build.\n";
+        continue;
     }
     echo 'SymSvel: building '.strtoupper($scope)."\n";
     $build = new Process(['npm', 'run', 'build'], $directory);
