@@ -25,6 +25,30 @@ proposées à partir du propriétaire du dépôt backend et restent modifiables.
 Elles ne pointent pas vers les dépôts officiels `symsvel-bo`, `symsvel-app`
 ou `symsvel-front`. Le projet récupère SymSvel comme dépendance.
 
+## Conserver le Setup dans le projet déployé
+
+Le **même Setup** sert à l'installation locale et au premier déploiement en
+production. Il fait partie des fichiers du backend applicatif versionnés dans
+le dépôt du développeur : **il ne doit pas être supprimé après la réussite
+du Setup local** et doit être livré avec le projet lors du premier déploiement.
+
+La fin du Setup local **ferme son accès dans cette installation** ; elle ne
+supprime ni son point d'entrée ni son code. L'état d'installation, la
+configuration et les secrets **sont propres à chaque environnement** :
+ils ne doivent pas être transportés depuis la machine locale par Git.
+Le backend fraîchement cloné en production doit donc pouvoir démarrer son
+propre parcours de première initialisation, indépendamment du fait que le
+développeur a déjà terminé le Setup sur son poste.
+
+Après la première initialisation en production, l'accès au Setup est fermé
+pour cette installation, sans supprimer les fichiers dont dépendrait une
+nouvelle installation du même projet sur un autre hébergement.
+
+**Point à valider dans l'implémentation :** l'entrée du Setup doit rester
+utilisable sur le serveur cible après `composer install`, avec les
+dépendances réellement livrées au projet. Cette capacité n'est pas encore
+certifiée par les tests du Setup local.
+
 ## Prérequis des déploiements continus (CD)
 
 **Pour automatiser le tout premier déploiement des interfaces et des
@@ -44,6 +68,10 @@ déclencher les actions du projet pour publier :
   et du Front, dans leurs dossiers d'hébergement respectifs ;
 - les **documentations destinées à la production**, dans leurs
   emplacements respectifs, en respectant leur niveau d'accès.
+
+Les interfaces peuvent résider sur un autre hébergement que le backend :
+le Setup n'inspecte pas leurs répertoires distants. Chaque CD est responsable
+de vérifier la publication dans sa destination et d'en signaler l'échec.
 
 La documentation développeur `dev-doc/` et son site MkDocs restent
 **strictement locaux** et ne font pas partie de la publication de
@@ -70,9 +98,9 @@ déploiement de remplacement.
 - Le mode production peut proposer et corriger les URL des dépôts du projet.
 - Une CD absente, inaccessible ou en échec est explicitement signalée ;
   aucun succès fictif n'est affiché.
-- Un dossier BO/App/Front simplement créé mais vide ne vaut pas
-  déploiement : chaque build attendu doit être réellement présent et
-  vérifiable.
+- Le Setup ne déduit pas la réussite d'une CD de la présence de
+  dossiers locaux : BO, App et Front peuvent être hébergés ailleurs.
+  La vérification des fichiers publiés relève des CD propres au projet.
 - Les documents réservés aux administrateurs et aux utilisateurs ne
   deviennent pas publics par erreur.
 - Tests automatisés, CI verte, crash-tests locaux et documentation mise
