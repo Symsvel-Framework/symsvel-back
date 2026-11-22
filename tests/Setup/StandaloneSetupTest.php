@@ -51,6 +51,30 @@ final class StandaloneSetupTest extends TestCase
         }
     }
 
+    public function testProductionCloneRestoresDevOrStableChannelFromComposerManifest(): void
+    {
+        foreach (['dev-dev' => 'dev', '^1.2' => 'stable'] as $constraint => $expected) {
+            $backend = sys_get_temp_dir().'/symsvel-channel-'.bin2hex(random_bytes(8));
+            self::assertTrue(mkdir($backend, 0700));
+            try {
+                file_put_contents($backend.'/composer.json', json_encode([
+                    'require' => ['symsvel-framework/core' => $constraint],
+                ], JSON_THROW_ON_ERROR));
+                $method = new ReflectionMethod(StandaloneSetup::class, 'prepareProductionChannel');
+                $method->invoke(null, $backend);
+                self::assertSame($expected, \SymSvel\Tooling\Update\ProjectChannel::read($backend));
+                // Once the channel exists, a second Setup visit must preserve it.
+                $method->invoke(null, $backend);
+                self::assertSame($expected, \SymSvel\Tooling\Update\ProjectChannel::read($backend));
+            } finally {
+                @unlink($backend.'/.symsvel/project.json');
+                @rmdir($backend.'/.symsvel');
+                @unlink($backend.'/composer.json');
+                @rmdir($backend);
+            }
+        }
+    }
+
     public function testFrontControllerMustGateRuntimeBeforeSymfonyAutoload(): void
     {
         $front = (string) file_get_contents(dirname(__DIR__, 2).'/public/index.php');
