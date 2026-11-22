@@ -65,6 +65,19 @@ final class StandaloneSetup
                 if (!$production && $status === SetupState::DATABASE_READY) {
                     self::redirect('/setup/admin');
                 }
+                if (!$production && $status === SetupState::RUNNING) {
+                    // Tooling accepts RUNNING and resumes incomplete migrations.
+                    // Never ask for database credentials again after phase 1 saved them.
+                    if ($method === 'POST') {
+                        self::command($backend, ['symsvel:setup:database', '--no-interaction'], null, 'Reprise des migrations');
+                        self::redirect('/setup/admin');
+                    }
+                    $csrf = self::esc((string) $_SESSION['symsvel_setup_csrf']);
+                    self::page('Reprendre les migrations',
+                        '<p>La préparation de la base a été interrompue. Les paramètres sont conservés.</p>'
+                        .'<form method="post"><input type="hidden" name="_token" value="'.$csrf.'">'
+                        .'<button type="submit">Reprendre les migrations sans effacer les données</button></form>');
+                }
                 if ($method === 'POST') {
                     self::configure($backend, $workspace, $production, $status);
                 }
