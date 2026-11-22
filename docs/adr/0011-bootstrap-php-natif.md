@@ -45,3 +45,15 @@ permissions système.
 Chantier **non finalisé** tant que CI, tests automatisés et CT utilisateur
 (local plus VPS) ne sont pas tous validés. Une installation déjà achevée
 conserve le marqueur `completed` comme unique verrou d'ouverture.
+
+## Précision après le premier cycle CI
+
+La CI valide que les routes Setup ne sont plus enregistrées dans le Kernel
+Symfony et que le `.env` versionné ne configure aucune origine CORS
+autorisé. L'allowlist des tests est fournie explicitement dans
+`phpunit.dist.xml` ; le runtime attend les valeurs du wizard.
+
+Un dépôt BO est obligatoire en production. Si les dépôts d'interfaces sont
+renseignés, le PAT Actions:write doit permettre à GitHub d'accepter
+tous les `workflow_dispatch`, sinon le Setup reste reprenable à la phase 2.
+Le `completed` est écrit après acceptation et non après simple tentative.
