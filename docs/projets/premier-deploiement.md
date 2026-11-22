@@ -1,3 +1,11 @@
+**Déclenchement des CD :** en production, lorsque des dépôts d'interfaces
+sont configurés, le PAT Actions:write est obligatoire. Le wizard ne clôt
+pas le Setup si GitHub refuse un `workflow_dispatch`. Il laisse la base et
+l'administrateur en place et permet de reprendre la finalisation avec un
+nouveau PAT sans relancer les migrations. Le statut `completed` n'est
+écrit qu'après acceptation de toutes les demandes ; un HTTP 204 ne prouve
+pas encore la réussite des transferts.
+
 ## Installation initiale après la refonte PHP native (22/11/2026)
 
 Parcours cible : `git clone` du Backend dans son document root, puis
