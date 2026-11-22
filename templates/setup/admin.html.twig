@@ -1,34 +1,89 @@
 {% extends 'base.html.twig' %}
-{% block title %}Premier administrateur SymSvel{% endblock %}
+{% block title %}{{ production ? 'Initialisation en production' : 'Premier administrateur SymSvel' }}{% endblock %}
 {% block body %}
-<main style="max-width:42rem;margin:5rem auto;font:1rem system-ui,sans-serif;padding:1rem">
-  <h1>Premier administrateur</h1>
-  <p>Phase 2 sur 2 : la base et les migrations sont prêtes. Les identifiants sont transmis directement au module Admins, sans fichier temporaire.</p>
+<main style="max-width:42rem;margin:4rem auto;font:1rem system-ui,sans-serif;padding:1rem">
+  <h1>{{ production ? 'Initialisation en production' : 'Premier administrateur' }}</h1>
   {% for message in app.flashes('setup_error') %}<p role="alert">{{ message }}</p>{% endfor %}
-  <form method="post">
-    <input type="hidden" name="_token" value="{{ csrf_token('symsvel_setup_admin') }}">
-    <input type="hidden" name="setup_action" value="provision">
-    <label for="admin_email">Adresse e-mail</label>
-    <input id="admin_email" name="admin_email" type="email" maxlength="254" required autocomplete="email" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
-    <label for="admin_password">Mot de passe (12 à 1024 octets UTF-8)</label>
-    <input id="admin_password" name="admin_password" type="password" maxlength="1024" required autocomplete="new-password" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
-    <meter id="admin-password-strength" min="0" max="4" value="0" style="display:block;width:100%" aria-label="Diversité du mot de passe"></meter>
-    <p id="admin-password-hint" role="status">12 à 1024 octets UTF-8, sans caractère nul. Une phrase longue et des caractères variés sont conseillés.</p>
-    <label for="admin_password_confirmation">Confirmer le mot de passe</label>
-    <input id="admin_password_confirmation" name="admin_password_confirmation" type="password" maxlength="1024" required autocomplete="new-password" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
-    <button type="submit">Créer le premier administrateur</button>
-  </form>
-  <hr>
-  <p>Si le compte a été créé mais que les builds ont échoué, vous pouvez relancer uniquement la finalisation, sans ressaisir le mot de passe.</p>
-  <form method="post">
-    <input type="hidden" name="_token" value="{{ csrf_token('symsvel_setup_admin') }}">
-    <input type="hidden" name="setup_action" value="complete">
-    <button type="submit">Relancer la finalisation</button>
-  </form>
+  {% if production %}
+    <p>Phase 2 sur 2 : choisissez comment initialiser les données de votre projet. Les CD GitHub de vos interfaces doivent déjà être opérationnelles pour permettre leur déclenchement.</p>
+    <form method="post" enctype="multipart/form-data">
+      <input type="hidden" name="_token" value="{{ csrf_token('symsvel_setup_admin') }}">
+      {% if database_ready %}
+        <p>La base est déjà initialisée. Vous pouvez terminer l'installation ou reprendre la création du premier administrateur si nécessaire.</p>
+      {% endif %}
+      <fieldset>
+        <legend>Comment initialiser la base ?</legend>
+        <label><input type="radio" name="setup_action" value="doctrine" checked> Exécuter les migrations Doctrine</label>
+        <label style="display:block;margin:.6rem 0"><input type="radio" name="setup_action" value="dump"> Importer un dump SQL</label>
+      </fieldset>
+      <div id="doctrine_fields">
+        <label for="admin_email">Adresse e-mail du premier administrateur</label>
+        <input id="admin_email" name="admin_email" type="email" maxlength="254" autocomplete="email" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
+        <label for="admin_password">Mot de passe (12 à 1024 octets UTF-8)</label>
+        <input id="admin_password" name="admin_password" type="password" maxlength="1024" autocomplete="new-password" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
+        <label for="admin_password_confirmation">Confirmer le mot de passe</label>
+        <input id="admin_password_confirmation" name="admin_password_confirmation" type="password" maxlength="1024" autocomplete="new-password" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
+      </div>
+      <div id="dump_fields" hidden>
+        <label for="dump_sql">Dump SQL texte (.sql)</label>
+        <input id="dump_sql" name="dump_sql" type="file" accept=".sql" style="display:block;margin:.5rem 0 1rem">
+        <p>Le dump doit correspondre au moteur choisi et contenir les données existantes, dont l'administrateur. L'import nécessite le client SQL sur l'hébergement et reste non réversible automatiquement.</p>
+      </div>
+      <fieldset>
+        <legend>CD GitHub (facultatif)</legend>
+        <label for="github_token">Jeton GitHub temporaire (Actions: write sur vos dépôts)</label>
+        <input id="github_token" name="github_token" type="password" autocomplete="off" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
+        <p>Si fourni, le Setup demandera le déclenchement du workflow <code>deploy.yml</code> sur <code>main</code> pour chaque dépôt renseigné. Le jeton n'est pas enregistré. Sans jeton ou sans CD, vous déploierez vos interfaces et documentations vous-même ultérieurement.</p>
+      </fieldset>
+      <button type="submit">Initialiser et terminer</button>
+    </form>
+    {% if database_ready %}
+      <form method="post" style="margin-top:1.5rem">
+        <input type="hidden" name="_token" value="{{ csrf_token('symsvel_setup_admin') }}">
+        <input type="hidden" name="setup_action" value="complete">
+        <button type="submit">Vérifier l'administrateur existant et terminer sans recréer la base</button>
+      </form>
+    {% endif %}
+    <script>
+      const options = document.querySelectorAll('input[name="setup_action"]');
+      function toggleFields() {
+        const dump = document.querySelector('input[name="setup_action"]:checked').value === 'dump';
+        document.getElementById('doctrine_fields').hidden = dump;
+        document.getElementById('dump_fields').hidden = !dump;
+        document.querySelectorAll('#doctrine_fields input').forEach(field => field.disabled = dump);
+        document.querySelectorAll('#dump_fields input').forEach(field => field.disabled = !dump);
+      }
+      options.forEach(option => option.addEventListener('change', toggleFields));
+      toggleFields();
+    </script>
+  {% else %}
+    <p>Phase 2 sur 2 : la base et les migrations sont prêtes. Les identifiants sont transmis directement au module Admins, sans fichier temporaire.</p>
+    <form method="post">
+      <input type="hidden" name="_token" value="{{ csrf_token('symsvel_setup_admin') }}">
+      <input type="hidden" name="setup_action" value="provision">
+      <label for="admin_email">Adresse e-mail</label>
+      <input id="admin_email" name="admin_email" type="email" maxlength="254" required autocomplete="email" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
+      <label for="admin_password">Mot de passe (12 à 1024 octets UTF-8)</label>
+      <input id="admin_password" name="admin_password" type="password" maxlength="1024" required autocomplete="new-password" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
+      <meter id="admin-password-strength" min="0" max="4" value="0" style="display:block;width:100%" aria-label="Diversité du mot de passe"></meter>
+      <p id="admin-password-hint" role="status">12 à 1024 octets UTF-8, sans caractère nul. Une phrase longue et des caractères variés sont conseillés.</p>
+      <label for="admin_password_confirmation">Confirmer le mot de passe</label>
+      <input id="admin_password_confirmation" name="admin_password_confirmation" type="password" maxlength="1024" required autocomplete="new-password" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
+      <button type="submit">Créer le premier administrateur</button>
+    </form>
+    <hr>
+    <p>Si le compte a été créé mais que les builds ont échoué, vous pouvez relancer uniquement la finalisation, sans ressaisir le mot de passe.</p>
+    <form method="post">
+      <input type="hidden" name="_token" value="{{ csrf_token('symsvel_setup_admin') }}">
+      <input type="hidden" name="setup_action" value="complete">
+      <button type="submit">Relancer la finalisation</button>
+    </form>
+  {% endif %}
 </main>
 {% endblock %}
 
 {% block javascripts %}
+{% if not production %}
 <script>
 (() => {
   const password = document.getElementById('admin_password');
@@ -67,4 +122,5 @@
   confirmation.addEventListener('input', () => confirmation.setCustomValidity(''));
 })();
 </script>
+{% endif %}
 {% endblock %}
