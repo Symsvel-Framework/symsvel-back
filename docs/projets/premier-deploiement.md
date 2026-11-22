@@ -119,6 +119,11 @@ Composer : le hook Back et le synchroniseur Tooling distinguent un dossier
 d'hébergement d'un projet Svelte réellement présent. Cela ne publie
 **aucun** build ; les CD restent responsables de la livraison des interfaces.
 
+- Le serveur doit disposer de PHP **CLI 8.4+**, accessible sous `php` depuis
+  PHP-FPM pour lancer les commandes d'initialisation. Si l'hébergeur utilise
+  plusieurs versions de PHP, `SYMSVEL_PHP_CLI` peut indiquer le bon exécutable.
+  La possibilité de lancer des sous-processus PHP depuis le serveur web
+  doit être disponible pour cette automatisation.
 - Le serveur doit pouvoir exécuter `composer install` avec **Tooling présent**
   pendant le premier Setup. Un livrable `composer install --no-dev` autonome
   n'est **pas encore validé** : Tooling est actuellement en `require-dev`.
