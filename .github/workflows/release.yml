@@ -25,12 +25,12 @@ jobs:
           php -v
           composer --version
           php -r 'if (PHP_VERSION_ID < 80400 || PHP_VERSION_ID >= 80500) { exit(1); } foreach (["ctype", "iconv", "intl", "pdo_sqlite"] as $ext) { if (!extension_loaded($ext)) { fwrite(STDERR, "Missing: $ext\\n"); exit(1); } }'
-      - name: Configure private package access
+      - name: Configure public GitHub Composer access
         env:
-          SYMSVEL_READ_TOKEN: ${{ secrets.SYMSVEL_READ_TOKEN }}
+          SYMSVEL_READ_TOKEN: ${{ github.token }}
         run: |
           if [ -z "$SYMSVEL_READ_TOKEN" ]; then
-            echo "::error::Repository secret SYMSVEL_READ_TOKEN is required to install private Core and Tooling packages."
+            echo "::error::Repository secret Automatic GITHUB_TOKEN is required to install public Core and Tooling packages."
             exit 1
           fi
           echo "::add-mask::$SYMSVEL_READ_TOKEN"
