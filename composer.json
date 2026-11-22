@@ -2,7 +2,7 @@
     "name": "symsvel-framework/back",
     "description": "SymSvel Framework - Symfony backend and API",
     "type": "project",
-    "license": "proprietary",
+    "license": "MIT",
     "minimum-stability": "stable",
     "prefer-stable": true,
     "require": {
