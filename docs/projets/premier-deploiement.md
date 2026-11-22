@@ -104,6 +104,12 @@ déploiement de remplacement.
 
 ## Contraintes techniques de cette première implémentation
 
+Lors de `composer install`, les dossiers de sous-domaines déjà créés
+mais dépourvus de sources Svelte ne doivent plus bloquer la synchronisation
+Composer : le hook Back et le synchroniseur Tooling distinguent un dossier
+d'hébergement d'un projet Svelte réellement présent. Cela ne publie
+**aucun** build ; les CD restent responsables de la livraison des interfaces.
+
 - Le serveur doit pouvoir exécuter `composer install` avec **Tooling présent**
   pendant le premier Setup. Un livrable `composer install --no-dev` autonome
   n'est **pas encore validé** : Tooling est actuellement en `require-dev`.
