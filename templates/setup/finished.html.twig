@@ -1,0 +1,11 @@
+{% extends 'base.html.twig' %}
+{% block title %}Initialisation du backend terminée{% endblock %}
+{% block body %}
+<main style="max-width:42rem;margin:4rem auto;font:1rem system-ui,sans-serif;padding:1rem">
+  <h1>Backend initialisé</h1>
+  <p>La base de données est prête et l'administrateur a été vérifié. Le Setup est désormais fermé sur cette installation.</p>
+  <h2>Déploiements des interfaces</h2>
+  {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+  <p>Une CD demandée à GitHub n'est pas nécessairement terminée : consultez les Actions de vos dépôts et vérifiez les publications de vos interfaces et documentations sur leurs propres hébergements.</p>
+</main>
+{% endblock %}
