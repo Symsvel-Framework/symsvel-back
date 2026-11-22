@@ -99,3 +99,8 @@ de zéro, migrations sur les SGBD retenus, premier admin,
 2FA, clone VPS, Setup prod, CD automatiques BO/App/Front,
 et fermeture définitive du Setup même après git pull.
 Aucune validation VPS n'est revendiquée avant ce parcours.
+
+Lors du premier clone, le canal SymSvel est redéduit de la contrainte
+Core du composer.json et écrit dans backend/.symsvel/project.json,
+absent de Git. Le canal de développement --dev peut donc parfaitement
+être utilisé avec APP_ENV=prod sur le VPS de crash-test.
