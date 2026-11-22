@@ -97,9 +97,12 @@ La phase 1 du Wizard propose PostgreSQL, MySQL, MariaDB et SQLite. PostgreSQL d�
 
 Le Wizard conserve le parcours continu : écriture atomique de `backend/.env.local`, puis commande `symsvel:setup:database` (connexion, création de base et migrations). Si cette commande échoue, le formulaire présente son code de sortie et sa sortie d'erreur réelle, limitée à 4 000 caractères, au lieu du message générique « Vérifiez la connexion et les migrations ». Les URL de connexion et le mot de passe configuré sont masqués avant affichage. La commande Tooling doit elle-même identifier l'étape fautive (connexion, création ou migration) pour que le diagnostic soit parfaitement catégorisé. Le Setup reste relançable après correction ; aucune modification du mécanisme de migrations n'est effectuée par ce patch.
 
-## CI Docker locale (10/11/2026)
+## Intégration continue GitHub-hosted (22/11/2026)
 
-La CI active `.github/workflows/ci.yml` exécute les tests du Back sur le runner Docker ARM64 d'organisation (`self-hosted`, `linux`, `ARM64`, `symsvel`). PHP 8.4, Composer et les extensions nécessaires sont préinstallés dans l'image ; leur présence est vérifiée avant les étapes de test. Le workflow GitHub-hosted original est conservé, désactivé, dans `.github/workflows/ci.yml.stub`. Pour revenir à GitHub-hosted, restaurer ce fichier sous `ci.yml`. Le smoke-test d'installation reste désactivé comme auparavant. La CI locale dépend de la disponibilité du Mac et de Docker ; n'exécuter que des contributions de confiance sur le runner persistant. La configuration d'accès aux dépôts privés doit éviter toute persistance de jetons entre jobs. Validation finale : CI verte et crash-tests XT requis.
+La CI de ce dépôt public utilise désormais **Ubuntu 24.04 sur les runners GitHub**, sans dépendance au Docker du mainteneur. Le workflow actif est `.github/workflows/ci.yml` ; il installe PHP 8.4 via `shivammathur/setup-php@v2` et exécute Composer, les contrôles Symfony et PHPUnit. Le contrôle de santé Core reste testé sur `dev`.  L'ancienne version `ci.yml.stub` est inactive.
+
+La publication par tag (`.github/workflows/release.yml`) utilise elle aussi GitHub-hosted. Les runners auto-hébergés sont réservés à `symsvel-packages` et `symsvel-recipes`, qui restent privés. Une CI verte ne remplace pas les crash-tests locaux.
+
 
 ### Visibilité des tests ignorés
 
