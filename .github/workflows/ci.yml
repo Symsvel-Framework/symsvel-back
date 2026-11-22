@@ -29,12 +29,12 @@ jobs:
           php -v
           composer --version
           php -r 'if (PHP_VERSION_ID < 80400 || PHP_VERSION_ID >= 80500) { exit(1); } foreach (["ctype", "iconv", "intl", "pdo_sqlite"] as $extension) { if (!extension_loaded($extension)) { fwrite(STDERR, "Missing PHP extension: $extension\n"); exit(1); } }'
-      - name: Configure private package access
+      - name: Configure public GitHub Composer access
         env:
-          SYMSVEL_READ_TOKEN: ${{ secrets.SYMSVEL_READ_TOKEN }}
+          SYMSVEL_READ_TOKEN: ${{ github.token }}
         run: |
           if [ -z "$SYMSVEL_READ_TOKEN" ]; then
-            echo "::error::Repository secret SYMSVEL_READ_TOKEN is required to install private Core and Tooling packages."
+            echo "::error::Repository secret Automatic GITHUB_TOKEN is required to install public Core and Tooling packages."
             exit 1
           fi
           echo "::add-mask::$SYMSVEL_READ_TOKEN"
@@ -56,7 +56,7 @@ jobs:
         with:
           repository: Symsvel-Framework/symsvel-core
           ref: dev
-          token: ${{ secrets.SYMSVEL_READ_TOKEN }}
+          token: ${{ github.token }}
           path: .symcore-ci
       - name: Test Core dev liveness through real Back routing
         if: github.ref == 'refs/heads/dev'
@@ -87,12 +87,12 @@ jobs:
 #       - uses: actions/setup-node@v4
 #         with:
 #           node-version: '22'
-#       - name: Configure access to private repositories
+#       - name: Configure access to public GitHub repositories
 #         env:
-#           SYMSVEL_READ_TOKEN: ${{ secrets.SYMSVEL_READ_TOKEN }}
+#           SYMSVEL_READ_TOKEN: ${{ github.token }}
 #         run: |
 #           if [ -z "$SYMSVEL_READ_TOKEN" ]; then
-#             echo "::error::SYMSVEL_READ_TOKEN is required."
+#             echo "::error::Automatic GITHUB_TOKEN is required."
 #             exit 1
 #           fi
 #           echo "::add-mask::$SYMSVEL_READ_TOKEN"
