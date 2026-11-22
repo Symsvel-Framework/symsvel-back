@@ -1,8 +1,7 @@
 # Premier déploiement d'un projet SymSvel
 
-> **Statut : parcours cible en revue architecturale, non implémenté.**
-> Cette page définit les prérequis et le comportement attendu du premier
-> déploiement **d'un projet créé avec SymSvel**, et non du framework SymSvel.
+> **Statut : première implémentation sur `dev`, validation en cours.**
+> Cette page concerne le déploiement **d'un projet créé avec SymSvel**, et non du framework SymSvel. Ni le parcours VPS ni l'import de dump n'ont encore été certifiés par crash-test.
 
 ## Préparation par le développeur
 
@@ -10,14 +9,19 @@
 2. Créer leurs répertoires cibles si l'hébergeur ne les crée pas automatiquement.
 3. Se connecter à l'hébergement en SSH, se placer dans le répertoire backend,
    cloner **son dépôt applicatif backend**, puis exécuter `composer install`.
-4. Ouvrir le Setup du projet dans le navigateur et sélectionner le mode
-   **Déploiement production**.
+4. Ouvrir `https://backend.domaine.tld/prod_settings` dans le navigateur.
+   Le même Wizard propose les modes **Installation locale** et **Déploiement production**.
+   Le Setup est conservé dans le code versionné du projet ; seul son **état** est propre à chaque installation.
 
 Le parcours de Setup est commun à l'installation locale et au premier
-déploiement de production. Les données de connexion à la base sont conservées
-dans le premier écran ; le mode choisi oriente la suite. En production, le
-deuxième écran propose soit l'exécution des migrations Doctrine et la création
-du premier administrateur, soit l'import d'un dump.
+déploiement de production. L'écran 1 collecte nom du projet, domaine,
+type/hôte/port/nom de BDD et identifiants. La branche production écrit
+`backend/.env.local` et la copie privée `secrets/.env` avec `APP_ENV=prod`,
+`APP_SECRET` et `DATABASE_URL`. L'écran 2 offre deux possibilités :
+**migrations Doctrine** suivies de la création du premier administrateur,
+ou **import d'un dump SQL** incluant les données et l'administrateur.
+Le Setup s'appuie sur les commandes existantes des modules et de Tooling.
+En cas d'erreur, il reste reprenable, sans promettre un rollback du dump.
 
 Les dépôts Git des interfaces **appartiennent au projet utilisateur**.
 Leurs URL (BO obligatoire, App et Front selon les composants installés) sont
@@ -56,13 +60,17 @@ documentations, les CD des dépôts du projet doivent être configurées,
 autorisées et opérationnelles avant le lancement de cette étape du Setup.**
 
 Le développeur est responsable de préparer les workflows CD de son projet,
-leurs accès et leurs destinations de publication. SymSvel ne crée ni ne
+leurs accès et leurs destinations de publication. Dans la première implémentation
+GitHub, le déclenchement attend un workflow **`deploy.yml`** activé sur la
+branche **`main`**, contenant `workflow_dispatch`, avec un jeton de portée
+limitée autorisé à déclencher les Actions (`Actions: write`) sur les dépôts.
+Le jeton est fourni ponctuellement sur le deuxième écran et n'est pas enregistré. SymSvel ne crée ni ne
 configure ces workflows à sa place. Connaître une URL GitHub ne suffit pas à
 déclencher une CD : le workflow doit exister et pouvoir être déclenché par le
 mécanisme autorisé du projet.
 
-Lorsque les CD sont opérationnelles, le Setup peut, dans le parcours cible,
-déclencher les actions du projet pour publier :
+Lorsque les CD sont opérationnelles, le Setup **demande le déclenchement**
+des actions du projet pour publier :
 
 - les **builds statiques Svelte** du BO et, s'ils sont présents, de l'App
   et du Front, dans leurs dossiers d'hébergement respectifs ;
@@ -70,7 +78,9 @@ déclencher les actions du projet pour publier :
   emplacements respectifs, en respectant leur niveau d'accès.
 
 Les interfaces peuvent résider sur un autre hébergement que le backend :
-le Setup n'inspecte pas leurs répertoires distants. Chaque CD est responsable
+le Setup n'inspecte pas leurs répertoires distants. Une réponse HTTP `204`
+de GitHub prouve uniquement que la demande de déclenchement est acceptée,
+**pas** que le build a été transféré ou publié. Chaque CD est responsable
 de vérifier la publication dans sa destination et d'en signaler l'échec.
 
 La documentation développeur `dev-doc/` et son site MkDocs restent
@@ -92,7 +102,26 @@ déclenchement et à la vérification des destinations. Cette étape reste
 **de sa responsabilité** ; SymSvel ne fabrique pas un mécanisme de
 déploiement de remplacement.
 
-## Critères de validation de la future implémentation
+## Contraintes techniques de cette première implémentation
+
+- Le serveur doit pouvoir exécuter `composer install` avec **Tooling présent**
+  pendant le premier Setup. Un livrable `composer install --no-dev` autonome
+  n'est **pas encore validé** : Tooling est actuellement en `require-dev`.
+- Le dump via formulaire est un fichier **SQL texte `.sql`** ; les formats
+  `.dump`, `.gz` et les archives ne sont pas pris en charge. Les limites PHP
+  `upload_max_filesize` et `post_max_size` s'appliquent. Le serveur doit disposer
+  du client `psql`, `mysql` ou `sqlite3` correspondant au SGBD choisi.
+- L'import est effectué dans une base existante et peut modifier des données.
+  Le développeur prépare une sauvegarde avant import ; aucun rollback automatique
+  des opérations SQL importées n'est revendiqué.
+- Le domaine et la politique CORS de production doivent correspondre aux URL
+  réellement hébergées, notamment si BO/App/Front résident sur des domaines différents.
+- Le Setup ne crée pas de workflow, de secret GitHub ni d'accès SSH pour le projet.
+  Il ne déploie jamais les dépôts officiels SymSvel.
+- L'accès distant `/prod_settings` est fermé lorsque l'état de ce déploiement
+  devient `completed`. Le Setup local `/setup` reste limité au loopback.
+
+## Critères de validation de la première implémentation
 
 - Le mode local conserve son fonctionnement sans dépendre de CD.
 - Le mode production peut proposer et corriger les URL des dépôts du projet.
@@ -106,6 +135,7 @@ déploiement de remplacement.
 - Tests automatisés, CI verte, crash-tests locaux et documentation mise
   à jour sont nécessaires avant de déclarer le chantier terminé.
 
-Ce guide décrit **le comportement cible**. Les workflows et le déclenchement
-automatique des CD de projets utilisateurs ne sont pas actuellement
-implémentés par le Setup.
+**État du chantier :** les modifications du Wizard sont poussées sur `dev`.
+Tests automatisés et CI ne remplacent pas la réinstallation Choralys `--dev`,
+son premier déploiement sur VPS, et la validation des vrais workflows CD
+applicatifs. Aucune release stable n'est publiée par cette documentation.
