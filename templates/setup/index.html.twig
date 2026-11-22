@@ -18,6 +18,15 @@
     <input id="local_domain" name="local_domain" type="text" maxlength="253" placeholder="{{ production ? 'exemple.fr' : 'xt.localhost' }}" required autocomplete="off" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
     <p>Utilisé par le projet après installation, pas l’adresse temporaire du Wizard.</p>
     <fieldset>
+      <legend>URL des composants du projet</legend>
+      <p>Associez chaque composant à son URL réelle. Les CORS seront calculés à partir de ces adresses, même si les sous-domaines ne s'appellent pas bo, app ou www. Aucun dossier n'est renommé.</p>
+      {% for scope, title in {'back': 'Back (API)', 'bo': 'Back-office', 'app': 'Application', 'front': 'Site public'} %}
+        <label for="origin_{{ scope }}">{{ title }} {{ scope in ['back', 'bo'] ? '(obligatoire)' : '(facultatif)' }}</label>
+        <input id="origin_{{ scope }}" name="origin_{{ scope }}" type="url" maxlength="300" data-origin-scope="{{ scope }}" {{ scope in ['back', 'bo'] ? 'required' : '' }} placeholder="https://{{ scope == 'front' ? 'www' : scope }}.domaine.fr" autocomplete="off" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
+      {% endfor %}
+      <p>Exemple : le scope App peut parfaitement correspondre à <code>https://manager.choralys.com</code>. Les URL doivent contenir uniquement le protocole, le domaine et éventuellement un port, sans chemin.</p>
+    </fieldset>
+    <fieldset>
       <legend>Connexion à la base de données</legend>
       <label for="db_driver">SGBD</label>
       <select id="db_driver" name="db_driver" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
@@ -69,6 +78,22 @@
     }
     driver.addEventListener('change', updateDatabaseFields);
     updateDatabaseFields();
+    const domain = document.getElementById('local_domain');
+    const scheme = {{ production ? "'https'" : "'http'" }};
+    const origins = document.querySelectorAll('[data-origin-scope]');
+    origins.forEach(input => input.addEventListener('input', () => {
+      input.dataset.manual = 'true';
+    }));
+    function updateOriginSuggestions() {
+      const base = domain.value.trim().toLowerCase();
+      origins.forEach(input => {
+        if (input.dataset.manual === 'true') return;
+        const scope = input.dataset.originScope;
+        input.value = base ? scheme + '://' + (scope === 'front' ? 'www' : scope) + '.' + base : '';
+      });
+    }
+    domain.addEventListener('input', updateOriginSuggestions);
+    updateOriginSuggestions();
     const mode = document.querySelectorAll('input[name="installation_mode"]');
     mode.forEach(input => input.addEventListener('change', () => {
       window.location.assign(input.value === 'production' ? '{{ path('symsvel_prod_settings') }}' : '{{ path('symsvel_setup') }}');
