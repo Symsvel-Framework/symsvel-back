@@ -92,3 +92,12 @@ et la suppression effective du bootstrap après finalisation.
 
 Les décisions et diagnostics historiques restent dans les ADR
 et l'historique Git, sans être des instructions d'installation actives.
+
+## Canal SymSvel sur un clone neuf
+
+Le fichier privé backend/.symsvel/project.json ne se versionne pas.
+Avant toute commande Tooling en production, le bootstrap lit la contrainte
+symsvel-framework/core dans le composer.json du projet pour recréer
+le canal dev (contrainte dev-*) ou stable (version de release).
+APP_ENV=prod reste indépendant du canal des packages. Un canal déjà
+persisté dans backend/.symsvel n'est jamais remplacé par le wizard.
