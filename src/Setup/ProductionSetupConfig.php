@@ -15,13 +15,18 @@ final class ProductionSetupConfig
     public function suggestions(string $backend): array
     {
         $defaults = ['bo' => '', 'app' => '', 'front' => ''];
-        $process = new Process(['git', '-C', $backend, 'remote', 'get-url', 'origin']);
-        $process->setTimeout(5);
-        $process->run();
-        if (!$process->isSuccessful()) {
+        try {
+            $process = new Process(['git', '-C', $backend, 'remote', 'get-url', 'origin']);
+            $process->setTimeout(5);
+            $process->run();
+            if (!$process->isSuccessful()) {
+                return $defaults;
+            }
+            $origin = trim($process->getOutput());
+        } catch (\Throwable) {
+            // Git may be unavailable in PHP-FPM's PATH even when SSH can use it.
             return $defaults;
         }
-        $origin = trim($process->getOutput());
         if (!preg_match('~^(?:https://github\.com/|git@github\.com:)([A-Za-z0-9-]+)/[A-Za-z0-9_.-]+(?:\.git)?/?$~D', $origin, $match)) {
             return $defaults;
         }
