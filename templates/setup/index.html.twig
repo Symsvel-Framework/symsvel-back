@@ -1,17 +1,22 @@
 {% extends 'base.html.twig' %}
-{% block title %}Installation SymSvel{% endblock %}
+{% block title %}Installation du projet{% endblock %}
 {% block body %}
-<main style="max-width:42rem;margin:5rem auto;font:1rem system-ui,sans-serif;padding:1rem">
-  <h1>Installation SymSvel</h1>
-  <p>Phase 1 sur 2 : configurez le projet et sa connexion à la base de données. La base et les migrations seront préparées avant la création du premier administrateur.</p>
+<main style="max-width:42rem;margin:4rem auto;font:1rem system-ui,sans-serif;padding:1rem">
+  <h1>Installation du projet</h1>
+  <p>Phase 1 sur 2 : configurez votre projet et la connexion à sa base de données.</p>
   {% for message in app.flashes('setup_error') %}<p role="alert">{{ message }}</p>{% endfor %}
   <form method="post">
     <input type="hidden" name="_token" value="{{ csrf_token('symsvel_setup') }}">
+    <fieldset>
+      <legend>Mode d'installation</legend>
+      <label><input type="radio" name="installation_mode" value="local" {% if not production %}checked{% endif %}> Installation locale</label>
+      <label style="display:block;margin:.6rem 0"><input type="radio" name="installation_mode" value="production" {% if production %}checked{% endif %}> Déploiement en production</label>
+    </fieldset>
     <label for="project_name">Nom du projet</label>
     <input id="project_name" name="project_name" type="text" maxlength="120" required autocomplete="organization" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
-    <label for="local_domain">Domaine local du projet (sans protocole ni port)</label>
-    <input id="local_domain" name="local_domain" type="text" maxlength="253" placeholder="xt.localhost" required autocomplete="off" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
-    <p>Utilisé par le projet après installation. Ne saisissez pas l’adresse temporaire 127.0.0.1 du Wizard.</p>
+    <label for="local_domain">{{ production ? 'Domaine du projet (sans protocole ni port)' : 'Domaine local du projet (sans protocole ni port)' }}</label>
+    <input id="local_domain" name="local_domain" type="text" maxlength="253" placeholder="{{ production ? 'exemple.fr' : 'xt.localhost' }}" required autocomplete="off" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
+    <p>Utilisé par le projet après installation, pas l’adresse temporaire du Wizard.</p>
     <fieldset>
       <legend>Connexion à la base de données</legend>
       <label for="db_driver">SGBD</label>
@@ -22,23 +27,33 @@
         <option value="sqlite">SQLite</option>
       </select>
       <div id="server_fields">
-      <label for="db_host">Hôte</label>
-      <input id="db_host" name="db_host" type="text" value="127.0.0.1" maxlength="253" required autocomplete="off" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
-      <label for="db_port">Port</label>
-      <input id="db_port" name="db_port" type="number" min="1" max="65535" value="5432" required style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
-      <label for="db_name">Nom de la base</label>
-      <input id="db_name" name="db_name" type="text" maxlength="128" required autocomplete="off" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
-      <label for="db_user">Utilisateur</label>
-      <input id="db_user" name="db_user" type="text" maxlength="128" required autocomplete="off" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
-      <label for="db_password">Mot de passe (facultatif)</label>
-      <input id="db_password" name="db_password" type="password" autocomplete="new-password" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
+        <label for="db_host">Hôte</label>
+        <input id="db_host" name="db_host" type="text" value="127.0.0.1" maxlength="253" required autocomplete="off" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
+        <label for="db_port">Port</label>
+        <input id="db_port" name="db_port" type="number" min="1" max="65535" value="5432" required style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
+        <label for="db_name">Nom de la base</label>
+        <input id="db_name" name="db_name" type="text" maxlength="128" required autocomplete="off" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
+        <label for="db_user">Utilisateur</label>
+        <input id="db_user" name="db_user" type="text" maxlength="128" required autocomplete="off" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
+        <label for="db_password">Mot de passe (facultatif)</label>
+        <input id="db_password" name="db_password" type="password" autocomplete="new-password" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
       </div>
       <div id="sqlite_fields" hidden>
         <label for="db_sqlite_path">Fichier SQLite relatif au backend</label>
         <input id="db_sqlite_path" name="db_sqlite_path" value="var/app.sqlite" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
       </div>
     </fieldset>
-    <button type="submit">Préparer la base et poursuivre</button>
+    {% if production %}
+      <fieldset>
+        <legend>Dépôts GitHub de votre projet</legend>
+        <p>Adresses suggérées à partir du dépôt backend. Adaptez-les si vos dépôts portent d'autres noms. Les CD sont à configurer dans vos propres dépôts.</p>
+        {% for scope, title in {'bo': 'Back-office', 'app': 'Application', 'front': 'Site public'} %}
+          <label for="repo_{{ scope }}">{{ title }} {{ scope == 'bo' ? '(obligatoire dans le projet)' : '(facultatif)' }}</label>
+          <input id="repo_{{ scope }}" name="repo_{{ scope }}" type="url" maxlength="300" value="{{ repo_suggestions[scope] }}" placeholder="https://github.com/compte/monProjet{{ scope|upper }}" style="display:block;width:100%;padding:.7rem;margin:.5rem 0 1rem">
+        {% endfor %}
+      </fieldset>
+    {% endif %}
+    <button type="submit">{{ production ? 'Configurer la production et poursuivre' : 'Préparer la base et poursuivre' }}</button>
   </form>
   <script>
     const driver = document.getElementById('db_driver');
@@ -54,6 +69,10 @@
     }
     driver.addEventListener('change', updateDatabaseFields);
     updateDatabaseFields();
+    const mode = document.querySelectorAll('input[name="installation_mode"]');
+    mode.forEach(input => input.addEventListener('change', () => {
+      window.location.assign(input.value === 'production' ? '{{ path('symsvel_prod_settings') }}' : '{{ path('symsvel_setup') }}');
+    }));
   </script>
 </main>
 {% endblock %}
