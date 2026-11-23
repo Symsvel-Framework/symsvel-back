@@ -4,7 +4,7 @@ on:
   push:
     branches: [dev, main]
   pull_request:
-    branches: [main]
+    branches: [dev, main]
     types: [opened, synchronize, reopened]
   workflow_dispatch:
 
@@ -24,6 +24,11 @@ jobs:
           extensions: ctype, iconv, intl, pdo_sqlite, sodium
           coverage: none
           tools: composer:v2
+      - name: Lint native setup bootstrap
+        run: |
+          php -l public/index.php
+          php -l src/Setup/StandaloneSetup.php
+          php -l tests/Setup/StandaloneSetupTest.php
       - name: Verify PHP and Composer
         run: |
           php -v
@@ -48,6 +53,21 @@ jobs:
         run: |
           php bin/console lint:container --env=test
           php bin/console list symsvel --env=test
+      - name: Smoke native setup over HTTP before Symfony starts
+        run: |
+          set -euo pipefail
+          php -S 127.0.0.1:18765 -t public public/index.php > "$RUNNER_TEMP/native-setup-http.log" 2>&1 &
+          setup_pid=$!
+          trap 'kill "$setup_pid" 2>/dev/null || true' EXIT
+          for attempt in 1 2 3 4 5 6 7 8 9 10; do
+            if curl --silent --fail http://127.0.0.1:18765/prod_settings -o "$RUNNER_TEMP/setup-page.html"; then
+              break
+            fi
+            sleep 1
+          done
+          grep -q 'Installation SymSvel' "$RUNNER_TEMP/setup-page.html"
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:18765/api/doc.json)" = 503
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' -X POST http://127.0.0.1:18765/prod_settings)" = 403
       - run: composer qa
       # Exercise the current Core development contract only in the CI workspace.
       - name: Checkout Core dev for HTTP integration
