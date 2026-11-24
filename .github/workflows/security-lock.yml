@@ -1,0 +1,32 @@
+name: Regenerate security lock (temporary)
+on:
+  push:
+    branches: [dev]
+    paths: ['composer.json', '.github/workflows/security-lock.yml']
+permissions:
+  contents: write
+jobs:
+  lock:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: ctype, iconv, intl, pdo_sqlite, sodium
+          coverage: none
+          tools: composer:v2
+      - name: Resolve only the affected packages
+        run: |
+          set -euo pipefail
+          cp composer.json "$RUNNER_TEMP/composer.original.json"
+          composer config bump-after-update false
+          composer update twig/twig --with-dependencies --minimal-changes --no-install --no-scripts --no-interaction --prefer-dist --no-progress
+          cp "$RUNNER_TEMP/composer.original.json" composer.json
+          composer validate --strict --no-check-publish
+          composer audit --locked
+          composer audit --locked --no-dev
+          git diff --stat
+          git add composer.lock
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'fix: regenerate Composer lock for security advisories'
+          git push origin HEAD:dev

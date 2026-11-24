@@ -12,3 +12,7 @@ La publication de tags `vX.Y.Z` par `.github/workflows/release.yml` s'exécute s
 ## Audit des dépendances PHP
 
 `composer audit --locked` est bloquant dans la CI et dans `composer qa`. Aucun avis n'est ignoré. Le lock du squelette Back doit être résolu par Composer, puis validé par `composer validate --strict --no-check-publish` et les audits complet et production (`composer audit --locked --no-dev`). En novembre 2026, les planchers de sécurité de Symfony 8.1 sont relevés pour HttpClient, Mime, Security HTTP, Serializer, Validator et YAML ; PHPUnit est relevé à 13.4.4. Les CT restent obligatoires après mise à jour et avant release.
+
+### Correctif Twig (24/11/2026)
+
+L'audit du lock a détecté neuf avis concernant `twig/twig` (CVE-2026-133763 à 133768, 133770 à 133772). Le plancher de Twig est relevé à `^3.31.1` et le lock doit être résolu par une mise à jour ciblée Composer (`--with-dependencies --minimal-changes`), avec les audits complet et production. Aucun avis ignoré, aucune modification des contrôles CI. Le CT reste nécessaire.
