@@ -20,3 +20,5 @@ L'audit du lock a détecté neuf avis concernant `twig/twig` (CVE-2026-133763 à
 ## Promotion stable du 24/11/2026
 
 Le Back requiert Core `^1.2.1` et Tooling `^1.4`. Régénérer le lock par `composer update symsvel-framework/core symsvel-framework/tooling --with-dependencies --minimal-changes --no-scripts`, puis valider le manifeste et les audits complet et production. Le test `StandaloneSetupPhpCliTest` exige désormais le résolveur PHP CLI dans Tooling stable : une absence est un échec, pas un test ignoré. Le parcours de premier déploiement utilise encore `composer install` avec les dépendances de développement ; `--no-dev` n'est pas validé pour le Setup initial.
+
+`ComposerStableLockTest` vérifie explicitement les contraintes du manifeste (`^1.2.1`, `^1.4`), les versions stables minimales (Core 1.2.1, Tooling 1.4.0), le content-hash du lock et la cohérence des références source/dist. Lors d'une promotion, ces assertions doivent être actualisées avec le manifeste et le lock généré par Composer.

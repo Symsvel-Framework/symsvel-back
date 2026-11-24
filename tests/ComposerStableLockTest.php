@@ -24,8 +24,8 @@ final class ComposerStableLockTest extends TestCase
             JSON_THROW_ON_ERROR,
         );
 
-        self::assertSame('^1.2', $composer['require']['symsvel-framework/core']);
-        self::assertSame('^1.2', $composer['require-dev']['symsvel-framework/tooling']);
+        self::assertSame('^1.2.1', $composer['require']['symsvel-framework/core']);
+        self::assertSame('^1.4', $composer['require-dev']['symsvel-framework/tooling']);
 
         // Equivalent to Composer\Package\Locker::getContentHash(), using
         // Composer's JsonFile::encode($relevantContent, 0) representation.
@@ -51,7 +51,7 @@ final class ComposerStableLockTest extends TestCase
             $package = $matches[0];
             $version = $package['version'];
             self::assertMatchesRegularExpression('/^v\d+\.\d+\.\d+$/D', $version);
-            $minimum = $name === 'symsvel-framework/tooling' ? '1.3.0' : '1.2.0';
+            $minimum = $name === 'symsvel-framework/tooling' ? '1.4.0' : '1.2.1';
             self::assertTrue(version_compare(ltrim($version, 'v'), $minimum, '>='), $name.' trop ancien : '.$version);
             self::assertSame($package['source']['reference'], $package['dist']['reference']);
             $slug = substr($name, strlen('symsvel-framework/'));
