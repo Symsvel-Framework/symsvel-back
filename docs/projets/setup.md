@@ -86,6 +86,13 @@ backend/.env.local et secrets/.env. Le binaire CLI PHP 8.4 et les
 extensions PDO nécessaires doivent être disponibles. La variable
 SYMSVEL_PHP_CLI peut désigner explicitement le CLI du VPS.
 
+En cas d'échec d'une commande du Setup, consulter `.symsvel/setup-error.log`
+à la racine du projet (fichier privé 0600, dernier échec uniquement).
+Les URL et lignes identifiées comme sensibles sont masquées ; la sortie des
+commandes recevant des identifiants administrateur sur stdin est omise.
+Le journal reste réservé aux administrateurs du serveur et est supprimé
+à la finalisation réussie en production.
+
 ## Validation indispensable
 
 La CI vérifie lint PHP, PHPUnit, et un smoke HTTP : le wizard s'ouvre
