@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Symfony\Component\Dotenv\Dotenv;
 use Symfony\Component\Process\Process;
 
 require dirname(__DIR__).'/vendor/autoload.php';
@@ -12,7 +13,30 @@ if (!is_file($backend.'/vendor/symsvel-framework/tooling/src/Command/SymSvelModu
     exit(0);
 }
 
-$environment = getenv('APP_ENV') ?: 'dev';
+// Resolve the configured environment even when Composer was started without APP_ENV.
+if (is_file($backend.'/.env')) {
+    (new Dotenv())->loadEnv($backend.'/.env');
+}
+$environment = getenv('APP_ENV') ?: ($_SERVER['APP_ENV'] ?? $_ENV['APP_ENV'] ?? 'dev');
+if ($environment === 'prod') {
+    echo "SymSvel: interface synchronization disabled in production.\n";
+    exit(0);
+}
+
+// A fresh production clone has no .env.local yet and only static document
+// roots. Local bootstrap creates the component sources before module install.
+$hasSources = false;
+foreach (['bo', 'app', 'front'] as $scope) {
+    if (is_file(dirname($backend).'/'.$scope.'/package.json')) {
+        $hasSources = true;
+        break;
+    }
+}
+if (!$hasSources) {
+    echo "SymSvel: no interface sources; skipping module synchronization.\n";
+    exit(0);
+}
+
 $sync = new Process([PHP_BINARY, 'bin/console', 'symsvel:module:sync', '--source=composer', '--env='.$environment], $backend);
 $sync->setTimeout(900);
 $sync->run(static function (string $type, string $output): void {
