@@ -21,6 +21,9 @@ final class ComposerInterfaceSyncTest extends TestCase
 
     private function assertSkipped(string $environment, bool $sources, string $message): void
     {
+        if (!class_exists(\SymSvel\Tooling\Module\ComposerInterfaceSynchronizer::class)) {
+            self::markTestSkipped('Requires the next Tooling release.');
+        }
         $root = sys_get_temp_dir().'/symsvel-sync-'.bin2hex(random_bytes(8));
         mkdir($root.'/backend/scripts', 0777, true);
         mkdir($root.'/app');
