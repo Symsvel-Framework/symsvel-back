@@ -471,8 +471,9 @@ final class StandaloneSetup
         }
         $body .= '<div id="admin_fields">'
             .self::input('E-mail administrateur', 'admin_email', '', false, 'email')
-            .self::input('Mot de passe administrateur', 'admin_password', '', false, 'password')
-            .self::input('Confirmer le mot de passe', 'admin_password_confirmation', '', false, 'password')
+            .self::input('Mot de passe administrateur', 'admin_password', '', false, 'password', ' autocomplete="new-password" maxlength="1024" aria-describedby="setup-password-feedback"')
+            .self::passwordFeedback()
+            .self::input('Confirmer le mot de passe', 'admin_password_confirmation', '', false, 'password', ' autocomplete="new-password" maxlength="1024"')
             .'</div>';
         if ($production) {
             $body .= '<div id="dump_fields" hidden><label>Dump SQL texte <input type="file" name="dump_sql" accept=".sql" disabled></label></div>'
@@ -499,6 +500,53 @@ final class StandaloneSetup
         self::page('Initialisation du projet', $body);
     }
 
+    private static function passwordFeedback(): string
+    {
+        return <<<'HTML'
+<div id="setup-password-feedback" class="password-feedback">
+    <ul>
+        <li data-rule="length"><span class="rule-mark" aria-label="Non satisfait">✕</span> 12 caractères minimum</li>
+        <li data-rule="upper"><span class="rule-mark" aria-label="Non satisfait">✕</span> Une majuscule</li>
+        <li data-rule="lower"><span class="rule-mark" aria-label="Non satisfait">✕</span> Une minuscule</li>
+        <li data-rule="digit"><span class="rule-mark" aria-label="Non satisfait">✕</span> Un chiffre</li>
+        <li data-rule="symbol"><span class="rule-mark" aria-label="Non satisfait">✕</span> Un caractère spécial</li>
+    </ul>
+    <p>Force du mot de passe : <strong id="setup-strength-label">Non renseigné</strong></p>
+    <div id="setup-strength" class="password-strength" role="meter" aria-label="Force du mot de passe" aria-valuemin="0" aria-valuemax="4" aria-valuenow="0" aria-valuetext="Non renseigné"><span></span><span></span><span></span><span></span></div>
+</div>
+<script>(() => {
+    const input = document.getElementById('admin_password');
+    const feedback = document.getElementById('setup-password-feedback');
+    const meter = document.getElementById('setup-strength');
+    const labels = ['Non renseigné', 'Faible', 'Moyen', 'Bon', 'Fort'];
+    function update() {
+        const password = input.value;
+        const length = Array.from(password).length;
+        const rules = {length: length >= 12, upper: /\p{Lu}/u.test(password),
+            lower: /\p{Ll}/u.test(password), digit: /\p{Nd}/u.test(password),
+            symbol: /[\p{P}\p{S}]/u.test(password)};
+        for (const row of feedback.querySelectorAll('[data-rule]')) {
+            const met = rules[row.dataset.rule];
+            row.classList.toggle('met', met);
+            const mark = row.querySelector('.rule-mark');
+            mark.textContent = met ? '✓' : '✕';
+            mark.setAttribute('aria-label', met ? 'Satisfait' : 'Non satisfait');
+        }
+        const classes = [rules.upper, rules.lower, rules.digit, rules.symbol].filter(Boolean).length;
+        const score = password.length === 0 ? 0 : Math.min(4, Number(rules.length) + Number(length >= 16) + Number(classes >= 2) + Number(classes >= 3));
+        meter.dataset.score = String(score);
+        meter.setAttribute('aria-valuenow', String(score));
+        meter.setAttribute('aria-valuetext', labels[score]);
+        document.getElementById('setup-strength-label').textContent = labels[score];
+        Array.from(meter.children).forEach((segment, index) => segment.classList.toggle('filled', index < score));
+    }
+    input.addEventListener('input', update);
+    window.addEventListener('pageshow', update);
+    update();
+})();</script>
+HTML;
+    }
+
     private static function input(string $label, string $key, string $value, bool $required,
         string $type = 'text', string $extra = ''): string
     {
@@ -518,6 +566,7 @@ final class StandaloneSetup
             .'h1{margin-top:0}fieldset{border:1px solid #ccd5dc;border-radius:8px;margin:1.5rem 0;padding:1rem}'
             .'label{display:block;margin-top:1rem}input:not([type=radio]):not([type=file]),select{display:block;box-sizing:border-box;width:100%;padding:.65rem;margin-top:.3rem}'
             .'button{background:#225c99;color:white;border:0;border-radius:6px;padding:.8rem 1.3rem;cursor:pointer}'
+            .'.password-feedback{font-size:.875rem;margin-top:.75rem}.password-feedback ul{list-style:none;padding:0;margin:.5rem 0}.password-feedback li{color:#b42318;margin:.3rem 0}.password-feedback li.met{color:#16734a}.rule-mark{display:inline-block;width:1.3em}.password-strength{display:flex;gap:.3rem}.password-strength span{height:.4rem;flex:1;background:#dbe2e7;border-radius:.2rem}.password-strength[data-score="1"] .filled{background:#b42318}.password-strength[data-score="2"] .filled{background:#a15c00}.password-strength[data-score="3"] .filled{background:#527c35}.password-strength[data-score="4"] .filled{background:#16734a}'
             .'[hidden]{display:none!important}</style></head><body><main><h1>'.self::esc($title).'</h1>'.$body.'</main></body></html>';
         exit;
     }

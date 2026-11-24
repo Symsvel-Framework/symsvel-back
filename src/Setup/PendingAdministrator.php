@@ -16,9 +16,14 @@ final class PendingAdministrator
         if (filter_var($email, FILTER_VALIDATE_EMAIL) === false || strlen($email) > 254) {
             throw new \InvalidArgumentException('Adresse e-mail administrateur invalide.');
         }
-        if (strlen($plainPassword) < 12 || strlen($plainPassword) > 4096
-            || str_contains($plainPassword, "\0")) {
-            throw new \InvalidArgumentException('Le mot de passe administrateur doit contenir au moins 12 caractères.');
+        // Same new-password contract as Auth, independent of the Symfony kernel.
+        if (strlen($plainPassword) > 1024 || str_contains($plainPassword, "\0")
+            || preg_match_all('/./us', $plainPassword) < 12
+            || preg_match('/\p{Lu}/u', $plainPassword) !== 1
+            || preg_match('/\p{Ll}/u', $plainPassword) !== 1
+            || preg_match('/\p{Nd}/u', $plainPassword) !== 1
+            || preg_match('/[\p{P}\p{S}]/u', $plainPassword) !== 1) {
+            throw new \InvalidArgumentException('Choisissez un mot de passe de 12 caractères minimum, avec une majuscule, une minuscule, un chiffre et un caractère spécial.');
         }
 
     }
