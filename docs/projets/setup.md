@@ -41,6 +41,11 @@ L'authentification/2FA du BO reste contrôlée par les modules natifs.
 ## Parcours de production
 
 Le développeur clone son Backend sur l'hébergement et exécute composer install.
+Tooling reste installé pour les commandes du Setup. Le hook Composer de
+synchronisation des interfaces ne s'exécute ni en APP_ENV=prod, ni sur un
+clone Backend dépourvu de sources Svelte (aucun package.json dans les
+composants voisins). La préparation des métadonnées Backend avant le cache
+reste active. Les builds et publications Svelte relèvent exclusivement des CD.
 Le domaine Backend doit pointer sur backend/public. Il ouvre ensuite
 https://api.domaine.tld/prod_settings et remplit le même premier formulaire,
 avec HTTPS obligatoire pour toutes les origines renseignées.
