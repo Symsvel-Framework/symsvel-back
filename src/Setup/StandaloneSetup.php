@@ -280,6 +280,7 @@ final class StandaloneSetup
                 throw new \RuntimeException('Une CD GitHub a refusé le déclenchement. Le Setup reste ouvert pour une reprise.');
             }
             (new SetupState())->transition($workspace, SetupState::DATABASE_READY, SetupState::COMPLETED);
+            @unlink($workspace.'/.symsvel/setup-error.log');
             // Remove the native setup code only from this deployed production checkout.
             // The persistent completed state also prevents reopening after a future git pull.
             if (is_file(__FILE__) && !@unlink(__FILE__)) {
@@ -354,12 +355,46 @@ final class StandaloneSetup
                 fwrite($pipes[0], $stdin);
             }
             fclose($pipes[0]);
-            if (proc_close($process) !== 0) {
-                error_log('SymSvel native setup command failed: '.$label.' (no sensitive output logged)');
-                throw new \RuntimeException($label.' échouée. Consultez les journaux du serveur, puis reprenez le Setup.');
+            $exit = proc_close($process);
+            if ($exit !== 0) {
+                self::recordCommandFailure($backend, $args, $exit, $log, $stdin);
+                throw new \RuntimeException($label.' échouée. Consultez le journal privé .symsvel/setup-error.log, puis reprenez le Setup.');
             }
         } finally {
             @unlink($log);
+        }
+    }
+
+    private static function recordCommandFailure(string $backend, array $args, int $exit, string $output, ?string $stdin): void
+    {
+        $directory = dirname($backend).'/.symsvel';
+        $temporary = tempnam($directory, '.setup-error-');
+        if ($temporary === false) {
+            error_log('SymSvel: unable to create private setup diagnostic.');
+            return;
+        }
+        try {
+            if (dirname($temporary) !== $directory || !chmod($temporary, 0600)) {
+                return;
+            }
+            $details = (string) file_get_contents($output, false, null, 0, 65536);
+            // Do not retain output from commands receiving administrator credentials.
+            if ($stdin !== null) {
+                $details = '[Diagnostic omitted for credential-bearing command]';
+            } else {
+                // Remove connection URLs and entire lines containing sensitive fields.
+                $details = preg_replace('~[a-z][a-z0-9+.-]*://[^\s]+~i', '[URL redacted]', $details) ?? '';
+                $details = preg_replace('~^.*(?:password|passwd|secret|token|DATABASE_URL|authorization|credential|mot de passe).*$~im', '[Sensitive line redacted]', $details) ?? '';
+            }
+            $message = gmdate('c').' '.($args[0] ?? 'console').' exit='.$exit."\n".$details."\n";
+            if (file_put_contents($temporary, $message) === false
+                || !rename($temporary, $directory.'/setup-error.log')) {
+                error_log('SymSvel: unable to publish private setup diagnostic.');
+            }
+        } finally {
+            if (is_file($temporary)) {
+                @unlink($temporary);
+            }
         }
     }
 
