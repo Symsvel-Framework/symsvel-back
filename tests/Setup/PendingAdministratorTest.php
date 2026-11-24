@@ -16,22 +16,22 @@ final class PendingAdministratorTest extends TestCase
         mkdir($root.'/.symsvel');
         $service = new PendingAdministrator();
         try {
-            $service->stage($root, ' developer@example.test ', 'correct-horse-battery-123');
+            $service->stage($root, ' developer@example.test ', 'Correct-horse-battery-123!');
             $path = $root.'/.symsvel/pending-admin.json';
             $payload = $service->read($root);
             self::assertSame('developer@example.test', $payload['email']);
             self::assertSame('developer', $payload['initial_role']);
-            self::assertTrue(password_verify('correct-horse-battery-123', $payload['password_hash']));
+            self::assertTrue(password_verify('Correct-horse-battery-123!', $payload['password_hash']));
             self::assertSame('argon2id', password_get_info($payload['password_hash'])['algoName']);
-            self::assertStringNotContainsString('correct-horse-battery-123', (string) file_get_contents($path));
+            self::assertStringNotContainsString('Correct-horse-battery-123!', (string) file_get_contents($path));
             clearstatcache(true, $path);
             self::assertSame(0600, fileperms($path) & 0777);
 
             $originalHash = $payload['password_hash'];
-            $service->stage($root, 'developer@example.test', 'correct-horse-battery-123');
+            $service->stage($root, 'developer@example.test', 'Correct-horse-battery-123!');
             self::assertSame($originalHash, $service->read($root)['password_hash']);
             try {
-                $service->stage($root, 'retry@example.test', 'another-secure-password');
+                $service->stage($root, 'retry@example.test', 'Another-secure-password-1!');
                 self::fail('Overwriting staged credentials must be rejected.');
             } catch (\RuntimeException) {
                 self::assertSame('developer@example.test', $service->read($root)['email']);
@@ -49,7 +49,7 @@ final class PendingAdministratorTest extends TestCase
     public function testRejectsInvalidEmailAndPassword(): void
     {
         $service = new PendingAdministrator();
-        foreach ([['invalid', 'correct-horse-battery-123'], ['a@example.test', 'short'], ['a@example.test', "valid-password\0suffix"]] as [$email, $password]) {
+        foreach ([['invalid', 'Correct-horse-battery-123!'], ['a@example.test', 'short'], ['a@example.test', "valid-password\0suffix"]] as [$email, $password]) {
             try {
                 $service->stage(sys_get_temp_dir(), $email, $password);
                 self::fail('Invalid administrator data accepted.');
@@ -59,10 +59,24 @@ final class PendingAdministratorTest extends TestCase
         }
     }
 
+    public function testNewPasswordCriteria(): void
+    {
+        $service = new PendingAdministrator();
+        $service->validate('developer@example.test', 'Éléphant-123!');
+        foreach (['Ab1!', 'lowercase-123!', 'UPPERCASE-123!', 'NoDigits-Here!', 'NoSymbol12345'] as $password) {
+            try {
+                $service->validate('developer@example.test', $password);
+                self::fail('Missing criterion accepted.');
+            } catch (\InvalidArgumentException) {
+                self::assertTrue(true);
+            }
+        }
+    }
+
     public function testValidationDoesNotWriteAdministratorData(): void
     {
         $service = new PendingAdministrator();
-        $service->validate(' developer@example.test ', 'correct-horse-battery-123');
+        $service->validate(' developer@example.test ', 'Correct-horse-battery-123!');
         $this->expectException(\InvalidArgumentException::class);
         $service->validate('developer@example.test', 'short');
     }
@@ -77,7 +91,7 @@ final class PendingAdministratorTest extends TestCase
             file_put_contents($path, json_encode([
                 'schema' => 1,
                 'email' => 'developer@example.test',
-                'password_hash' => password_hash('correct-horse-battery-123', PASSWORD_BCRYPT),
+                'password_hash' => password_hash('Correct-horse-battery-123!', PASSWORD_BCRYPT),
                 'initial_role' => 'developer',
             ], JSON_THROW_ON_ERROR));
             $this->expectException(\RuntimeException::class);
@@ -98,7 +112,7 @@ final class PendingAdministratorTest extends TestCase
         symlink($root.'/target', $root.'/.symsvel/pending-admin.json');
         try {
             $this->expectException(\RuntimeException::class);
-            (new PendingAdministrator())->stage($root, 'developer@example.test', 'correct-horse-battery-123');
+            (new PendingAdministrator())->stage($root, 'developer@example.test', 'Correct-horse-battery-123!');
         } finally {
             @unlink($root.'/.symsvel/pending-admin.json');
             @unlink($root.'/target');

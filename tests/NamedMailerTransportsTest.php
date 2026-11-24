@@ -17,11 +17,11 @@ final class NamedMailerTransportsTest extends TestCase
         self::assertSame([
             'smtp', 'mailpit', 'mailhog', 'smtp4dev', 'mailtrap',
         ], array_keys($transports));
-        self::assertSame('%env(MAILER_DSN)%', $transports['smtp']);
+        self::assertSame('symsvel-configured://smtp', $transports['smtp']);
         self::assertSame('smtp://127.0.0.1:1025', $transports['mailpit']);
         self::assertSame('smtp://127.0.0.1:1025', $transports['mailhog']);
         self::assertSame('smtp://127.0.0.1:25', $transports['smtp4dev']);
-        self::assertSame('%env(MAILTRAP_DSN)%', $transports['mailtrap']);
+        self::assertSame('symsvel-configured://mailtrap', $transports['mailtrap']);
         self::assertArrayNotHasKey('dsn', $config['framework']['mailer']);
     }
 }

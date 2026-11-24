@@ -23,5 +23,6 @@ Pour une vue d'ensemble, consulter [Comprendre SymSvel](../architecture/index.md
 - [0008 : Les modules possèdent leurs données et migrations](0008-donnees-et-migrations.md)
 - [0009 : Installation et maintenance récupérables](0009-operations-fiables.md)
 - [0010 : Une fonctionnalité livrée est testée et documentée](0010-qualite-et-documentation.md)
+- [0011 : Bootstrap PHP natif avant Symfony](0011-bootstrap-php-natif.md)
 
 Les ADR définissent les choix validés. Les vérifications techniques restantes sont signalées dans les documents concernés ; elles ne constituent pas une validation de l'implémentation.

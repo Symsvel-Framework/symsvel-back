@@ -4,7 +4,7 @@ on:
   push:
     branches: [dev, main]
   pull_request:
-    branches: [main]
+    branches: [dev, main]
     types: [opened, synchronize, reopened]
   workflow_dispatch:
 
@@ -24,6 +24,11 @@ jobs:
           extensions: ctype, iconv, intl, pdo_sqlite, sodium
           coverage: none
           tools: composer:v2
+      - name: Lint native setup bootstrap
+        run: |
+          php -l public/index.php
+          php -l src/Setup/StandaloneSetup.php
+          php -l tests/Setup/StandaloneSetupTest.php
       - name: Verify PHP and Composer
         run: |
           php -v
@@ -42,13 +47,47 @@ jobs:
       # Composer manifest validation is already part of `composer qa` below.
       # - name: Validate Composer manifest and lockfile
       #   run: composer validate --strict --no-check-publish
+      - name: Audit locked dependencies
+        run: composer audit --locked
       - name: Install locked dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
       - name: Verify bundle registration and command
         run: |
           php bin/console lint:container --env=test
           php bin/console list symsvel --env=test
+      - name: Smoke native setup over HTTP before Symfony starts
+        run: |
+          set -euo pipefail
+          php -S 127.0.0.1:18765 -t public public/index.php > "$RUNNER_TEMP/native-setup-http.log" 2>&1 &
+          setup_pid=$!
+          trap 'kill "$setup_pid" 2>/dev/null || true' EXIT
+          for attempt in 1 2 3 4 5 6 7 8 9 10; do
+            if curl --silent --fail http://127.0.0.1:18765/prod_settings -o "$RUNNER_TEMP/setup-page.html"; then
+              break
+            fi
+            sleep 1
+          done
+          grep -q 'Installation SymSvel' "$RUNNER_TEMP/setup-page.html"
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:18765/api/doc.json)" = 503
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' -X POST http://127.0.0.1:18765/prod_settings)" = 403
       - run: composer qa
+      # The native setup on dev uses the current Tooling contract.
+      # Keep the stable lock and its QA unchanged; exercise dev Tooling separately.
+      - name: Checkout Tooling dev for native setup integration
+        if: github.ref == 'refs/heads/dev'
+        uses: actions/checkout@v4
+        with:
+          repository: Symsvel-Framework/symsvel-tooling
+          ref: dev
+          token: ${{ github.token }}
+          path: .symtooling-ci
+      - name: Test native setup PHP CLI resolution with Tooling dev
+        if: github.ref == 'refs/heads/dev'
+        run: |
+          composer config repositories.symsvel-tooling-ci '{"type":"path","url":"./.symtooling-ci","options":{"symlink":true,"versions":{"symsvel-framework/tooling":"dev-dev"}}}'
+          composer require --dev 'symsvel-framework/tooling:dev-dev' --with-all-dependencies --no-scripts --no-interaction --no-progress
+          php -r 'require "vendor/autoload.php"; if (!class_exists(\SymSvel\Tooling\Process\PhpCliExecutableResolver::class)) { exit(1); }'
+          php vendor/bin/phpunit tests/Setup/StandaloneSetupPhpCliTest.php --display-skipped --fail-on-skipped
       # Exercise the current Core development contract only in the CI workspace.
       - name: Checkout Core dev for HTTP integration
         if: github.ref == 'refs/heads/dev'

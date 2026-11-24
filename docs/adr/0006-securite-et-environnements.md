@@ -22,6 +22,6 @@ Les outils locaux ne sont pas des services exposés ; le code runtime peut être
 
 Ne pas imposer une politique de droits Unix unique à tous les environnements. Documenter les exigences et les limites.
 
-## Vérification technique restante
+## Application au Setup
 
-Revoir séparément le cas du fichier `.env.local` créé par le setup et les permissions réellement nécessaires.
+En local individuel, `.env.local` est publié en 0644 afin que les identités CLI et HTTP distinctes puissent le lire, sans droits d'écriture ou d'exécution pour les autres. En production les deux fichiers d'environnement générés restent en 0600. Les métadonnées Setup privées ne sont pas ouvertes : le nom public est projeté dans l'environnement runtime.
