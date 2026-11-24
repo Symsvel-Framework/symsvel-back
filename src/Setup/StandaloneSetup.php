@@ -157,13 +157,13 @@ final class StandaloneSetup
             // ProjectChannel belongs to backend/.symsvel, not the workspace
             // SetupState. A fresh Git clone never contains this ignored file.
             self::prepareProductionChannel($backend);
-            (new ProductionEnvironmentWriter())->write($backend, $databaseUrl, $domain, $origins);
+            (new ProductionEnvironmentWriter())->write($backend, $databaseUrl, $domain, $origins, $name);
             $metadata->save($workspace, $name, $domain);
             $setupConfig->save($workspace, $repos);
             (new SetupState())->transition($workspace, SetupState::PENDING, SetupState::RUNNING);
             self::redirect('/prod_settings/admin');
         }
-        self::writeLocalEnvironment($backend, $databaseUrl, $domain, $origins);
+        self::writeLocalEnvironment($backend, $databaseUrl, $domain, $origins, $name);
         $metadata->save($workspace, $name, $domain);
         // The established Tooling command owns database creation and migrations.
         self::command($backend, ['symsvel:setup:database', '--no-interaction'], null, 'Préparation de la base');
@@ -193,7 +193,7 @@ final class StandaloneSetup
         ProjectChannel::write($backend, $channel);
     }
 
-    private static function writeLocalEnvironment(string $backend, string $databaseUrl, string $domain, array $origins): void
+    private static function writeLocalEnvironment(string $backend, string $databaseUrl, string $domain, array $origins, string $name): void
     {
         $path = $backend.'/.env.local';
         if (is_link($path) || (file_exists($path) && !is_file($path))) {
@@ -208,7 +208,7 @@ final class StandaloneSetup
             }
         }
         $keys = ['APP_ENV', 'APP_DEBUG', 'APP_SECRET', 'DATABASE_URL', 'SYMSVEL_CORS_ALLOW_ORIGIN',
-            'SYMSVEL_BO_DOMAIN', 'SYMSVEL_BACK_ORIGIN', 'SYMSVEL_BO_ORIGIN', 'SYMSVEL_APP_ORIGIN', 'SYMSVEL_FRONT_ORIGIN'];
+            'SYMSVEL_PROJECT_NAME_B64', 'SYMSVEL_BO_DOMAIN', 'SYMSVEL_BACK_ORIGIN', 'SYMSVEL_BO_ORIGIN', 'SYMSVEL_APP_ORIGIN', 'SYMSVEL_FRONT_ORIGIN'];
         $lines = array_values(array_filter($lines, static function (string $line) use ($keys): bool {
             foreach ($keys as $key) {
                 if (preg_match('/^\s*'.preg_quote($key, '/').'\s*=/', $line) === 1) {
@@ -218,7 +218,8 @@ final class StandaloneSetup
             return trim($line) !== '';
         }));
         $values = ['APP_ENV' => 'dev', 'APP_DEBUG' => '1',
-            'APP_SECRET' => $secret ?? bin2hex(random_bytes(32)), 'DATABASE_URL' => $databaseUrl]
+            'APP_SECRET' => $secret ?? bin2hex(random_bytes(32)), 'DATABASE_URL' => $databaseUrl,
+            'SYMSVEL_PROJECT_NAME_B64' => base64_encode(trim($name))]
             + (new ProjectUrlMapping())->environment($origins, $domain);
         foreach ($values as $key => $value) {
             $lines[] = $key.'='.json_encode($value, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
@@ -228,7 +229,11 @@ final class StandaloneSetup
             throw new \RuntimeException('Impossible de préparer la configuration locale.');
         }
         try {
-            if (!chmod($temp, 0600) || file_put_contents($temp, implode("\n", $lines)."\n") === false || !rename($temp, $path)) {
+            // Local developer and HTTP server can have distinct OS identities.
+            // Publish read-only access for other local users, never write/execute.
+            if (dirname($temp) !== $backend || !chmod($temp, 0600)
+                || file_put_contents($temp, implode("\n", $lines)."\n") === false
+                || !chmod($temp, 0644) || !rename($temp, $path)) {
                 throw new \RuntimeException('Impossible de publier la configuration locale.');
             }
         } finally {

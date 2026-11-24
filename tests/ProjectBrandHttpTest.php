@@ -8,6 +8,18 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 final class ProjectBrandHttpTest extends WebTestCase
 {
+    public function testRuntimeProjectionDoesNotNeedPrivateMetadata(): void
+    {
+        $controller = new \App\Controller\ProjectBrandController(
+            new \App\Setup\ProjectMetadata(),
+            '/nonexistent-private-workspace/backend',
+            base64_encode('XT Démo $PROJET'),
+        );
+        self::assertSame(['data' => ['name' => 'XT Démo $PROJET']], json_decode((string) $controller()->getContent(), true, 512, JSON_THROW_ON_ERROR));
+        $invalid = new \App\Controller\ProjectBrandController(new \App\Setup\ProjectMetadata(), '/nonexistent/backend', '%%%');
+        self::assertSame(['data' => ['name' => 'SymSvel']], json_decode((string) $invalid()->getContent(), true, 512, JSON_THROW_ON_ERROR));
+    }
+
     public function testPublicBrandReturnsOnlyTheProjectName(): void
     {
         $client = static::createClient();

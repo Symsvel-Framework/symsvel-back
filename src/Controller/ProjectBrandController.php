@@ -16,14 +16,32 @@ final readonly class ProjectBrandController
     public function __construct(
         private ProjectMetadata $metadata,
         #[Autowire('%kernel.project_dir%')] private string $backend,
+        #[Autowire('%env(SYMSVEL_PROJECT_NAME_B64)%')] private string $runtimeName,
     ) {
     }
 
     #[Route('/apiopen/project', name: 'symsvel_public_project', methods: ['GET'], format: 'json')]
     public function __invoke(): JsonResponse
     {
+        // The local HTTP worker need not be able to read private Setup metadata.
+        // Base64 safely transports arbitrary Unicode names through Symfony Dotenv.
+        $name = 'SymSvel';
+        if ($this->runtimeName === '') {
+            // Compatibility with existing deployments created before projection.
+            $name = $this->metadata->publicName(dirname($this->backend));
+        } else {
+            $decoded = base64_decode($this->runtimeName, true);
+            if ($decoded !== false) {
+                try {
+                    $this->metadata->validate($decoded);
+                    $name = trim($decoded);
+                } catch (\InvalidArgumentException) {
+                    // Invalid runtime configuration uses the public fallback.
+                }
+            }
+        }
         $response = ApiResponse::success([
-            'name' => $this->metadata->publicName(dirname($this->backend)),
+            'name' => $name,
         ]);
         $response->headers->set('Cache-Control', 'no-store');
 

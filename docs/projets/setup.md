@@ -113,3 +113,9 @@ symsvel-framework/core dans le composer.json du projet pour recréer
 le canal dev (contrainte dev-*) ou stable (version de release).
 APP_ENV=prod reste indépendant du canal des packages. Un canal déjà
 persisté dans backend/.symsvel n'est jamais remplacé par le wizard.
+
+## Permissions locales et branding public
+
+Le Setup local publie `backend/.env.local` en **0644** (propriétaire seul en écriture, lecture par le serveur HTTP local), conformément à ADR 0006 et à la séparation des identités CLI/HTTP. Le temporaire reste 0600 pendant l'écriture et la publication est atomique. Aucun compte ou groupe système n'est imposé. Ce mode convient à une machine de développement individuelle, pas à un serveur partagé ; l'accès au workspace reste sous la responsabilité de son propriétaire. Le Setup production conserve **0600** pour `.env.local` et `secrets/.env`.
+
+Les deux parcours projettent le nom public validé dans `SYMSVEL_PROJECT_NAME_B64`, sans ouvrir les métadonnées privées `.symsvel/project.json` à PHP-FPM. Base64 est un encodage (pas un secret), utilisé pour préserver Unicode et les caractères interprétés par Dotenv. `/apiopen/project` lit cette valeur, valide le nom et ne retourne que `data.name`. Les déploiements antérieurs sans projection conservent le fallback historique. Tests : modes de fichier, retry, lecture Dotenv, nom public sans métadonnées privées.

@@ -22,7 +22,7 @@ final class ProductionEnvironmentWriterTest extends TestCase
                 'front' => 'https://www.choralys.com',
             ];
             $writer = new ProductionEnvironmentWriter();
-            $writer->write($root.'/backend', 'postgresql://db:pass@localhost:5432/site', 'choralys.com', $origins);
+            $writer->write($root.'/backend', 'postgresql://db:pass@localhost:5432/site', 'choralys.com', $origins, 'Choralys');
             $envFile = $root.'/backend/.env.local';
             $secretsFile = $root.'/secrets/.env';
             $initial = (string) file_get_contents($envFile);
@@ -34,10 +34,12 @@ final class ProductionEnvironmentWriterTest extends TestCase
             self::assertStringContainsString('SYMSVEL_FRONT_ORIGIN="https://www.choralys.com"', $initial);
             self::assertStringContainsString('DATABASE_URL="postgresql://db:pass@localhost:5432/site"', $initial);
             self::assertMatchesRegularExpression('/APP_SECRET="[0-9a-f]{64}"/', $initial);
+            $parsed = (new \Symfony\Component\Dotenv\Dotenv())->parse($initial);
+            self::assertSame('Choralys', base64_decode($parsed['SYMSVEL_PROJECT_NAME_B64'], true));
             self::assertSame(0600, fileperms($envFile) & 0777);
             self::assertSame(0600, fileperms($secretsFile) & 0777);
 
-            $writer->write($root.'/backend', 'postgresql://db:changed@localhost:5432/site', 'choralys.com', $origins);
+            $writer->write($root.'/backend', 'postgresql://db:changed@localhost:5432/site', 'choralys.com', $origins, 'Choralys');
             $updated = (string) file_get_contents($envFile);
             preg_match('/APP_SECRET="[0-9a-f]{64}"/', $initial, $one);
             preg_match('/APP_SECRET="[0-9a-f]{64}"/', $updated, $two);

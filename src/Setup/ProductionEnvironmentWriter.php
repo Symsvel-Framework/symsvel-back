@@ -10,7 +10,7 @@ namespace App\Setup;
  */
 final class ProductionEnvironmentWriter
 {
-    public function write(string $backend, string $databaseUrl, string $domain, array $origins): void
+    public function write(string $backend, string $databaseUrl, string $domain, array $origins, string $name): void
     {
         $workspace = dirname($backend);
         $secrets = $workspace.'/secrets';
@@ -35,7 +35,7 @@ final class ProductionEnvironmentWriter
             }
         }
         $lines = array_values(array_filter($lines, static fn (string $line): bool =>
-            preg_match('/^\s*(?:APP_ENV|APP_DEBUG|APP_SECRET|DATABASE_URL|SYMSVEL_CORS_ALLOW_ORIGIN|SYMSVEL_BO_DOMAIN|SYMSVEL_(?:BACK|BO|APP|FRONT)_ORIGIN)\s*=/', $line) !== 1
+            preg_match('/^\s*(?:APP_ENV|APP_DEBUG|APP_SECRET|DATABASE_URL|SYMSVEL_PROJECT_NAME_B64|SYMSVEL_CORS_ALLOW_ORIGIN|SYMSVEL_BO_DOMAIN|SYMSVEL_(?:BACK|BO|APP|FRONT)_ORIGIN)\s*=/', $line) !== 1
             && $line !== ''
         ));
         $values = [
@@ -43,6 +43,7 @@ final class ProductionEnvironmentWriter
             'APP_DEBUG' => '0',
             'APP_SECRET' => $secret ?? bin2hex(random_bytes(32)),
             'DATABASE_URL' => $databaseUrl,
+            'SYMSVEL_PROJECT_NAME_B64' => base64_encode(trim($name)),
         ] + (new ProjectUrlMapping())->environment($origins, $domain);
         foreach ($values as $key => $value) {
             $lines[] = $key.'='.json_encode($value, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);

@@ -32,19 +32,23 @@ final class StandaloneSetupTest extends TestCase
                 'front' => '',
             ];
             $method = new ReflectionMethod(StandaloneSetup::class, 'writeLocalEnvironment');
-            $method->invoke(null, $backend, 'sqlite:///%kernel.project_dir%/var/app.sqlite', 'test.localhost', $origins);
+            $method->invoke(null, $backend, 'sqlite:///%kernel.project_dir%/var/app.sqlite', 'test.localhost', $origins, 'XT Démo $PROJET');
             $contents = (string) file_get_contents($backend.'/.env.local');
             self::assertStringContainsString('APP_ENV="dev"', $contents);
             self::assertMatchesRegularExpression('/^APP_SECRET="([a-f0-9]{64})"$/m', $contents);
             self::assertStringContainsString('SYMSVEL_BACK_ORIGIN="http://back.test.localhost"', $contents);
             self::assertStringContainsString('SYMSVEL_BO_ORIGIN="http://bo.test.localhost"', $contents);
             preg_match('/^APP_SECRET="([a-f0-9]{64})"$/m', $contents, $matches);
-            $method->invoke(null, $backend, 'sqlite:///%kernel.project_dir%/var/new.sqlite', 'test.localhost', $origins);
+            $method->invoke(null, $backend, 'sqlite:///%kernel.project_dir%/var/new.sqlite', 'test.localhost', $origins, 'XT Démo $PROJET');
             $newContents = (string) file_get_contents($backend.'/.env.local');
             self::assertStringContainsString('APP_SECRET="'.$matches[1].'"', $newContents);
             self::assertStringNotContainsString('var/app.sqlite', $newContents);
             self::assertStringContainsString('var/new.sqlite', $newContents);
             self::assertFalse(is_executable($backend.'/.env.local'));
+            clearstatcache(true, $backend.'/.env.local');
+            self::assertSame(0644, fileperms($backend.'/.env.local') & 0777);
+            $parsed = (new \Symfony\Component\Dotenv\Dotenv())->parse($newContents);
+            self::assertSame('XT Démo $PROJET', base64_decode($parsed['SYMSVEL_PROJECT_NAME_B64'], true));
         } finally {
             @unlink($backend.'/.env.local');
             @rmdir($backend);
