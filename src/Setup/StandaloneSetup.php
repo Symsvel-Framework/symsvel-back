@@ -533,7 +533,8 @@ final class StandaloneSetup
             mark.setAttribute('aria-label', met ? 'Satisfait' : 'Non satisfait');
         }
         const classes = [rules.upper, rules.lower, rules.digit, rules.symbol].filter(Boolean).length;
-        const score = password.length === 0 ? 0 : Math.min(4, Number(rules.length) + Number(length >= 16) + Number(classes >= 2) + Number(classes >= 3));
+        const valid = rules.length && classes === 4 && new TextEncoder().encode(password).length <= 1024 && !password.includes('\0') && !/[\uD800-\uDFFF]/u.test(password);
+        const score = password.length === 0 ? 0 : Math.max(1, Math.min(valid ? 4 : 3, Number(rules.length) + Number(length >= 16) + Number(classes >= 2) + Number(classes >= 3)));
         meter.dataset.score = String(score);
         meter.setAttribute('aria-valuenow', String(score));
         meter.setAttribute('aria-valuetext', labels[score]);

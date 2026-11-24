@@ -127,3 +127,5 @@ Le choix `mails.transport` reste persisté par Settings. Mailpit, MailHog et smt
 ## Choix du mot de passe administrateur
 
 Le wizard natif affiche les cinq critères en direct (rouge/vert avec symbole) et une jauge indicative : au moins 12 caractères Unicode, une majuscule, une minuscule, un chiffre et un caractère spécial (ponctuation ou symbole). Le serveur valide indépendamment les mêmes règles que la politique Auth des nouveaux mots de passe, ainsi que le plafond technique de 1024 octets UTF-8 et l'absence de NUL. Le contrôle est indépendant du Kernel Symfony. La confirmation reste obligatoire. L'import d'une base existante et les mots de passe déjà enregistrés ne sont pas concernés. Le score visuel ne mesure pas l'entropie réelle.
+
+La jauge affiche au moins un segment dès la première saisie et réserve son niveau maximal aux mots de passe conformes.
