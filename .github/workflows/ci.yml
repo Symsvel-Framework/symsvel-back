@@ -47,6 +47,8 @@ jobs:
       # Composer manifest validation is already part of `composer qa` below.
       # - name: Validate Composer manifest and lockfile
       #   run: composer validate --strict --no-check-publish
+      - name: Audit locked dependencies
+        run: composer audit --locked
       - name: Install locked dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
       - name: Verify bundle registration and command

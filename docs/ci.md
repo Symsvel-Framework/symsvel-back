@@ -8,3 +8,7 @@ Les runners auto-hébergés du mainteneur restent réservés aux dépôts privé
 
 La publication de tags `vX.Y.Z` par `.github/workflows/release.yml` s'exécute sur GitHub-hosted Ubuntu 24.04. Elle conserve PHP 8.4 et Composer, la vérification du tag, les contrôles existants et la création de GitHub Release via `actions/github-script@v7`. Aucun tag n'a été créé durant cette migration ; la validation d'une release réelle reste nécessaire.
 
+
+## Audit des dépendances PHP
+
+`composer audit --locked` est bloquant dans la CI et dans `composer qa`. Aucun avis n'est ignoré. Le lock du squelette Back doit être résolu par Composer, puis validé par `composer validate --strict --no-check-publish` et les audits complet et production (`composer audit --locked --no-dev`). En novembre 2026, les planchers de sécurité de Symfony 8.1 sont relevés pour HttpClient, Mime, Security HTTP, Serializer, Validator et YAML ; PHPUnit est relevé à 13.4.4. Les CT restent obligatoires après mise à jour et avant release.
