@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Setup;
 
 use SymSvel\Tooling\Installation\SetupState;
+use SymSvel\Tooling\Process\PhpCliExecutableResolver;
 use SymSvel\Tooling\Update\ProjectChannel;
 
 /**
@@ -338,7 +339,10 @@ final class StandaloneSetup
 
     private static function command(string $backend, array $args, ?string $stdin, string $label): void
     {
-        $php = PHP_SAPI === 'cli-server' ? PHP_BINARY : ((string) getenv('SYMSVEL_PHP_CLI') ?: 'php');
+        if (!class_exists(PhpCliExecutableResolver::class)) {
+            throw new \RuntimeException('Version de Tooling incompatible avec le Setup. Mettez à jour Tooling sur le canal du projet.');
+        }
+        $php = PhpCliExecutableResolver::resolve();
         // Child commands can print more than a pipe buffer. A private temporary
         // output file avoids blocking FPM while we wait for their completion.
         $log = tempnam(sys_get_temp_dir(), 'symsvel-setup-command-');

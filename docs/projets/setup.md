@@ -84,7 +84,7 @@ ou dépôt GitHub n'est modifié par le nettoyage du VPS.
 Le compte serveur exécutant PHP doit pouvoir écrire dans .symsvel,
 backend/.env.local et secrets/.env. Le binaire CLI PHP 8.4 et les
 extensions PDO nécessaires doivent être disponibles. La variable
-SYMSVEL_PHP_CLI peut désigner explicitement le CLI du VPS.
+SYMSVEL_PHP_CLI peut désigner explicitement le CLI du VPS (chemin absolu recommandé, ou nom résolu via PATH). Le Setup et les commandes Tooling partagent le résolveur `PhpCliExecutableResolver`, qui utilise le `PhpExecutableFinder` de Symfony en l'absence de réglage explicite. Le binaire sélectionné doit être absolu, exécutable et correspondre à PHP CLI >= 8.4. Un réglage invalide est refusé ; aucun chemin propre au VPS n'est imposé. La résolution fonctionne également sans PATH si le binaire natif est disponible dans PHP_BINDIR. Le Setup et Tooling doivent être installés sur des versions compatibles du même canal. En développement, la CI vérifie le contrat avec Tooling dev sans modifier le lock stable versionné.
 
 En cas d'échec d'une commande du Setup, consulter `.symsvel/setup-error.log`
 à la racine du projet (fichier privé 0600, dernier échec uniquement).
