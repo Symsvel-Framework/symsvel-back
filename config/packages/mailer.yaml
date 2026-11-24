@@ -1,11 +1,12 @@
 # Symfony Mailer named transports. Selecting one in Settings does not
 # install/start a server or verify it is reachable. The developer owns
-# local services and their credentials.
+# local services and their credentials. Optional DSNs are not parsed until
+# the corresponding named transport is selected for delivery.
 framework:
     mailer:
         transports:
-            smtp: '%env(MAILER_DSN)%'
+            smtp: 'symsvel-configured://smtp'
             mailpit: 'smtp://127.0.0.1:1025'
             mailhog: 'smtp://127.0.0.1:1025'
             smtp4dev: 'smtp://127.0.0.1:25'
-            mailtrap: '%env(MAILTRAP_DSN)%'
+            mailtrap: 'symsvel-configured://mailtrap'
