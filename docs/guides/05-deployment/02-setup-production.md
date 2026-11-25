@@ -15,11 +15,15 @@ Configurez la racine web sur public. Le compte PHP doit pouvoir écrire les fich
 
 ## 2. Configurer le projet
 
+![Setup production : origines, SGBD et dépôts GitHub](images/prod-config.png)
+
 Ouvrez https://api.example.com/prod_settings en remplaçant le domaine. Restreignez l'accès à cette route pendant la première installation (pare-feu, restriction IP ou dispositif équivalent côté hébergeur).
 
 Renseignez le nom du projet, ses origines HTTPS, le SGBD et ses identifiants. Renseignez également les dépôts des interfaces. Le BO est obligatoire.
 
 ## 3. Initialiser la base
+
+![Setup production : migrations ou import SQL, compte administrateur et déclenchement CD](images/prod-admin.png)
 
 Choisissez l'une des possibilités proposées :
 

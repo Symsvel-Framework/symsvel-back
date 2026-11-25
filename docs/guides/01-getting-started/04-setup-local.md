@@ -4,6 +4,8 @@ Le wizard s'ouvre sur une adresse 127.0.0.1 avec un port choisi par la CLI. Gard
 
 ## Étape 1 : projet et base de données
 
+![Setup local : configuration du projet et choix du SGBD](images/local-config.png)
+
 1. Saisissez le nom du projet et son domaine local.
 2. Renseignez les origines réellement utilisées par le backend et les interfaces installées (schéma, hôte et port éventuel, sans chemin).
 3. Choisissez PostgreSQL, MySQL, MariaDB ou SQLite.
@@ -13,6 +15,8 @@ Le wizard s'ouvre sur une adresse 127.0.0.1 avec un port choisi par la CLI. Gard
 Exemple : http://api.catalogue.test pour Back, http://bo.catalogue.test pour BO, http://app.catalogue.test pour App. Utilisez les adresses correspondant à vos propres hôtes virtuels.
 
 ## Étape 2 : premier administrateur
+
+![Setup local : création du premier administrateur](images/local-admin.png)
 
 Saisissez l'adresse e-mail, puis un mot de passe conforme aux critères affichés (au moins 12 caractères, majuscule, minuscule, chiffre et caractère spécial). Confirmez et validez.
 

@@ -47,9 +47,3 @@ jobs:
         with:
           name: setup-documentation
           path: ${{ runner.temp }}/docs-capture/images/*.png
-      - name: Export synthetic screenshot bytes for the documentation commit
-        run: |
-          for f in "$RUNNER_TEMP/docs-capture/images/"*.png; do
-            mode=$(basename "$f" .png)
-            base64 -w 2048 "$f" | sed "s/^/DOCIMAGE $mode /"
-          done
