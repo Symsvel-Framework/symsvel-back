@@ -4,7 +4,8 @@ Clonez la CLI officielle sur votre machine, dans un dossier que vous conserverez
 
 ~~~bash
 mkdir -p "$HOME/.local/bin"
-git clone https://github.com/Symsvel-Framework/symsvel-cli.git "$HOME/.local/symsvel-cli"
+git clone --branch main https://github.com/Symsvel-Framework/symsvel-cli.git "$HOME/.local/symsvel-cli"
+chmod +x "$HOME/.local/symsvel-cli/bin/symsvel"
 ln -s "$HOME/.local/symsvel-cli/bin/symsvel" "$HOME/.local/bin/symsvel"
 export PATH="$HOME/.local/bin:$PATH"
 symsvel doctor

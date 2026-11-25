@@ -1,0 +1,55 @@
+name: Capture documentation Setup
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - 'tests/Fixtures/Documentation/render-setup.php'
+      - '.github/workflows/docs-capture.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  screenshots:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+          tools: composer:v2
+      - run: composer install --no-scripts --no-interaction --prefer-dist --no-progress
+        env:
+          COMPOSER_AUTH: ${{ format('{{"github-oauth":{{"github.com":"{0}"}}}}', github.token) }}
+      - name: Render the four real forms with synthetic project data
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/docs-capture/backend" "$RUNNER_TEMP/docs-capture/images"
+          git -C "$RUNNER_TEMP/docs-capture/backend" init -q
+          git -C "$RUNNER_TEMP/docs-capture/backend" remote add origin https://github.com/Example-Project/backend.git
+          for mode in local-config local-admin prod-config prod-admin; do
+            php tests/Fixtures/Documentation/render-setup.php "$mode" "$RUNNER_TEMP/docs-capture/backend" > "$RUNNER_TEMP/docs-capture/$mode.html"
+            grep -q 'Phase' "$RUNNER_TEMP/docs-capture/$mode.html"
+            height=1500
+            case "$mode" in
+              local-config) height=1600 ;;
+              local-admin) height=1000 ;;
+              prod-config) height=2000 ;;
+              prod-admin) height=1300 ;;
+            esac
+            google-chrome --headless --no-sandbox --disable-dev-shm-usage --hide-scrollbars --window-size=1000,$height --screenshot="$RUNNER_TEMP/docs-capture/images/$mode.png" "file://$RUNNER_TEMP/docs-capture/$mode.html"
+            test -s "$RUNNER_TEMP/docs-capture/images/$mode.png"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: setup-documentation
+          path: ${{ runner.temp }}/docs-capture/images/*.png
+      - name: Export synthetic screenshot bytes for the documentation commit
+        run: |
+          for f in "$RUNNER_TEMP/docs-capture/images/"*.png; do
+            mode=$(basename "$f" .png)
+            base64 -w 2048 "$f" | sed "s/^/DOCIMAGE $mode /"
+          done
