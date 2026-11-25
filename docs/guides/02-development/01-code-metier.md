@@ -37,27 +37,64 @@ curl http://api.catalogue.test/apiopen/catalogue-demo
 
 Cet exemple retourne des données publiques fictives. Pour des données privées, utilisez un scope protégé et contrôlez les autorisations côté serveur.
 
-## Afficher une page Svelte
+## Afficher les données dans le BO
 
-Dans une interface installée, ajoutez src/routes/catalogue-demo/+page.svelte :
+Dans `backend/config/packages/nelmio_cors.yaml`, ajoutez sous `paths:` une règle pour ce point d'entrée public uniquement :
+
+~~~yaml
+        '^/apiopen/catalogue-demo$': ~
+~~~
+
+Conservez les règles existantes et les origines autorisées du Setup. Cette règle permet au navigateur du BO d'appeler cette route, sans ouvrir les autres API publiques.
+
+Créez `bo/src/routes/catalogue-demo/+page.svelte` :
 
 ~~~svelte
 <script lang="ts">
-  let products = [
-    { id: 1, name: 'Carnet' },
-    { id: 2, name: 'Stylo' }
-  ];
+  import { onMount } from 'svelte';
+  import { api } from '../../lib/api/client';
+
+  type Product = { id: number; name: string };
+  let products = $state<Product[]>([]);
+  let loading = $state(true);
+  let error = $state('');
+
+  onMount(async () => {
+    try {
+      const result = await api<{ data: Product[] }>(
+        '/apiopen/catalogue-demo',
+        { public: true }
+      );
+      products = result.data;
+    } catch {
+      error = 'Impossible de charger le catalogue.';
+    } finally {
+      loading = false;
+    }
+  });
 </script>
 
 <h1>Catalogue</h1>
-<ul>
-  {#each products as product (product.id)}
-    <li>{product.name}</li>
-  {/each}
-</ul>
+{#if loading}
+  <p>Chargement…</p>
+{:else if error}
+  <p>{error}</p>
+{:else}
+  <ul>
+    {#each products as product (product.id)}
+      <li>{product.name}</li>
+    {/each}
+  </ul>
+{/if}
 ~~~
 
-Lancez npm run dev dans cette interface, puis ouvrez /catalogue-demo. Pour connecter la page à l'API, utilisez le client API de l'interface ou fetch avec l'origine backend du projet. Assurez-vous que l'origine du serveur de développement est autorisée par la configuration CORS.
+Depuis `bo/`, construisez l'interface avec l'adresse réelle de votre API (exemple) :
+
+~~~bash
+PUBLIC_API_URL=http://api.catalogue.test npm run build
+~~~
+
+Servez le build avec le vhost BO configuré lors du Setup, connectez-vous et ouvrez `/catalogue-demo`. Vous devez retrouver Carnet et Stylo, cette fois lus depuis Symfony. Adaptez le domaine de l'API et du BO à votre installation. Si vous utilisez Vite en mode développement, son origine doit également être autorisée par votre configuration CORS.
 
 ## Aller plus loin
 

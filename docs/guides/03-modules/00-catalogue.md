@@ -25,4 +25,6 @@ symsvel require symsvel-framework/module-NOM
 
 Remplacez NOM par le nom réel du package. Les modules obligatoires ne peuvent pas être désinstallés. Les modules facultatifs possèdent leur propre guide une fois installés ; retrouvez-les dans cette rubrique.
 
+Brevo et Google Login sont des modules facultatifs en préparation : ne les installez pas sur la seule base de leur nom. Attendez leur disponibilité dans votre canal et leur guide validé.
+
 Pour découvrir les modules disponibles avant leur installation, consultez les [dépôts officiels](https://github.com/orgs/Symsvel-Framework/repositories).
