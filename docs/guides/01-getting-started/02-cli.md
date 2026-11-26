@@ -20,3 +20,5 @@ Si doctor signale un prérequis manquant, installez-le puis relancez la commande
 Pour comprendre les commandes et les responsabilités de la CLI, consultez la [référence CLI](../06-reference/01-cli.md).
 
 [Étape suivante : créer un projet](03-creer-un-projet.md).
+
+Les catalogues officiels de distribution sont `https://packages.symsvel.com` (stable), `https://packages-dev.symsvel.com` (développement) et `https://recipes.symsvel.com` (recettes Flex).
