@@ -106,6 +106,30 @@ jobs:
           php bin/console debug:router symsvel_core_liveness --env=test
           php vendor/bin/phpunit tests/Integration/CoreHealthHttpTest.php --display-skipped
 
+  native-dev-resolution:
+    # The isolated module QA jobs can resolve stable dependencies. This job
+    # exercises the joint dev-dev constraints of a real new project.
+    if: github.ref == 'refs/heads/dev' || github.event.pull_request.head.ref == 'dev'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: ctype, iconv, intl, pdo_sqlite, sodium
+          coverage: none
+          tools: composer:v2
+      - name: Resolve all native modules from the official dev branches
+        env:
+          SYMSVEL_READ_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          export COMPOSER_AUTH="$(php -r 'echo json_encode(["github-oauth" => ["github.com" => getenv("SYMSVEL_READ_TOKEN")]], JSON_THROW_ON_ERROR);')"
+          target="$(mktemp -d)"
+          php tests/Fixtures/Composer/prepare-native-dev-resolution.php "$target"
+          composer --working-dir="$target" update --no-install --no-scripts --no-plugins --no-interaction --no-progress --prefer-dist
+          php tests/Fixtures/Composer/prepare-native-dev-resolution.php "$target" --verify
+
   # Installation smoke temporairement désactivé.
   # À réactiver lors du chantier modules / interfaces SvelteKit.
 #   installation-smoke:
