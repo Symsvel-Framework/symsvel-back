@@ -37,3 +37,7 @@ Audit initial (code de dev) : le lanceur CLI est un script à shebang Unix ; `Cl
 Compte rendu : version Windows et architecture, versions PHP/Composer/Git/Node/npm/Python, shell, serveur HTTP, SGBD, version ou révision SymSvel, commandes exactes, durée par étape, résultat et logs expurgés. Ajouter une colonne « Où ai-je dû demander de l'aide ? » : toute intervention non documentée est une anomalie documentaire à corriger, même si l'installation finit par fonctionner.
 
 Clôture : aucune anomalie bloquante non résolue, CI verte, CT indépendant validé par le mainteneur et guides à jour. La disponibilité du matériel Windows du testeur ne constitue pas une validation préalable.
+
+## Première tranche d'adaptation (26/11/2026)
+
+Le CT initial a confirmé l'échec de `/bin/sh` et la limitation POSIX des ACL. CLI : lanceur CMD, recherche PATH native, Composer PHAR, nettoyage du Git upstream et cas local sous le compte CLI ; CI Windows bootstrap verte après correction de la détection Composer. Tooling PR #85 : venv Windows et vraie navigation MkDocs validés dans la première CI, résolution native Composer/npm et normalisation des clés de fichiers ajoutées ensuite (CI à confirmer). Restent notamment : nettoyage des composants, chemins et rollback transactionnels, Setup complet, gestion NTFS sous des comptes distincts, tests d'installation réelle et CT étudiant. Ne pas promouvoir le support Windows stable ni relancer le CT complet sur cette seule base.

@@ -76,11 +76,21 @@ Les adresses doivent résoudre vers la machine locale et correspondre exactement
 
 Pour la base, choisissez un fichier à l'intérieur du backend, hors de public. Si vous utilisez un autre SGBD, préparez son service et un compte autorisé à créer la base du projet. Les réglages des droits HTTP Windows devront être validés dans le chantier natif : ne transposez pas les commandes chmod ou setfacl de Linux.
 
-## 3. Installer la CLI : qualification en cours
+## 3. Installer la CLI : première qualification native sur dev
 
-Les commandes d'installation macOS/Linux ne sont pas des commandes PowerShell. La CLI utilise encore des mécanismes POSIX, et la génération du site documentaire attend un environnement virtuel Python de type Unix. Les outils ci-dessus peuvent fonctionner alors que `symsvel doctor` ou la création d'un projet échouent.
+Les commandes d'installation macOS/Linux ne sont pas des commandes PowerShell. Le lanceur Windows `symsvel.cmd` est disponible sur la branche `dev` de la CLI. Le contrôle des prérequis et les primitives de bootstrap ont passé la première CI Windows native ; cela ne valide pas encore une création complète.
 
-Lorsque la compatibilité native sera validée, ce chapitre précisera le lanceur Windows, sa mise à disposition dans le PATH et la commande de vérification. L'objectif est de conserver les mêmes commandes SymSvel (`doctor`, `create-project`, `setup`, `require`, `update`, `remove`) que sur macOS et Linux, sans modifier manuellement le code installé.
+~~~powershell
+git clone --branch dev https://github.com/Symsvel-Framework/symsvel-cli.git "$HOME\symsvel-cli"
+$env:Path = "$HOME\symsvel-cli\bin;$env:Path"
+symsvel.cmd doctor
+~~~
+
+Si le dépôt CLI est déjà présent, placez-vous dans ce dépôt et utilisez `git switch dev`, puis `git pull --ff-only`. Ajoutez le dossier `bin` au PATH utilisateur pour rendre le lanceur accessible après réouverture du terminal. Utilisez Composer-Setup (composer.phar), Node.js/npm et Python installés normalement, sans modifier la politique d'exécution PowerShell.
+
+Le Setup intégré utilise le compte qui exécute la CLI ; aucune ACL NTFS n'est modifiée dans ce cas. Un serveur HTTP sous un compte distinct exige encore une configuration de droits spécifique, sans transposer chmod/setfacl. Le build documentaire Windows utilise désormais `Scripts/python.exe` dans la PR Tooling #85, dont l'intégration et le parcours complet restent à qualifier.
+
+Ne lancez pas encore la création d'un projet métier : les transactions, les interfaces et le Setup complet doivent passer leurs tests Windows. L'objectif reste de conserver les mêmes commandes SymSvel sur les trois systèmes, sans retoucher les sources installées.
 
 Le [parcours de création](03-creer-un-projet.md) et le [Setup local](04-setup-local.md) restent les étapes communes après qualification.
 
