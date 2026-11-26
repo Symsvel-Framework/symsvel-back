@@ -26,7 +26,8 @@ if token:
 env["COMPOSER_HOME"] = str(workspace.parent / "symsvel-ci-composer-home")
 env["GIT_TERMINAL_PROMPT"] = "0"
 env["COMPOSER_NO_INTERACTION"] = "1"
-log = workspace.parent / "symsvel-windows-install.log"
+log = workspace.parent / "symsvel-windows-install.stdout.log"
+error_log = workspace.parent / "symsvel-windows-install.stderr.log"
 password = "Zeko!8" + secrets.token_hex(12)
 print("::add-mask::" + password, flush=True)
 opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
@@ -49,11 +50,11 @@ def csrf(page):
 
 try:
     subprocess.run(["php", str(cli), "doctor"], cwd=workspace, env=env, check=True, timeout=60)
-    with log.open("wb") as output:
+    with log.open("wb") as output, error_log.open("wb") as errors:
         proc = subprocess.Popen(
             ["php", str(cli), "create-project", "--components=all", "--dev"],
             cwd=workspace, env=env, stdin=subprocess.DEVNULL,
-            stdout=output, stderr=subprocess.STDOUT,
+            stdout=output, stderr=errors,
         )
         deadline = time.monotonic() + 1200
         url = None
@@ -111,11 +112,12 @@ try:
 except Exception:
     # Logs never include a full environment or the submitted form. Redact
     # disposable credentials and token before printing diagnostic tails.
-    diagnostic = read_log()[-18000:]
-    for value in (password, token):
-        if value:
-            diagnostic = diagnostic.replace(value, "[redacted]")
-    print(diagnostic, flush=True)
+    for label, path in (("stdout", log), ("stderr", error_log)):
+        diagnostic = path.read_text(encoding="utf-8", errors="replace")[-18000:] if path.is_file() else ""
+        for value in (password, token):
+            if value:
+                diagnostic = diagnostic.replace(value, "[redacted]")
+        print(f"--- CLI {label} ---\n{diagnostic}", flush=True)
     # Private Setup log may contain a child-command diagnostic, not form payloads.
     setup_log = workspace / ".symsvel/setup-error.log"
     if setup_log.is_file():
