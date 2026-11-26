@@ -177,3 +177,27 @@ jobs:
 #           test ! -e bo/package.json
 #           test ! -e app/package.json
 #           test ! -e front/package.json
+
+  security-lock-refresh:
+    # Temporary maintainer job: generate a reviewed lock on dev only.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: ctype, iconv, intl, pdo_sqlite, sodium
+          coverage: none
+          tools: composer:v2
+      - name: Resolve Symfony security patch lock
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          export COMPOSER_AUTH="$(php -r 'echo json_encode(["github-oauth" => ["github.com" => getenv("GH_TOKEN")]], JSON_THROW_ON_ERROR);')"
+          composer update 'symfony/*' --with-all-dependencies --no-install --no-scripts --no-plugins --no-interaction --no-progress
+          composer validate --no-check-publish
+          composer audit --locked
+      - name: Export reviewed lock for maintainer
+        run: |
+          python3 -c 'import base64; from pathlib import Path; data=base64.b64encode(Path("composer.lock").read_bytes()).decode(); print("LOCK_BEGIN"); print("\n".join("LOCK_CHUNK:"+data[i:i+3000] for i in range(0,len(data),3000))); print("LOCK_END")'

@@ -29,7 +29,8 @@ $manifest = json_decode((string) file_get_contents($back.'/composer.json'), true
 // packages. Keep the rest of the Back dependency graph and stability policy.
 $manifest['repositories'] = array_values(array_filter(
     $manifest['repositories'] ?? [],
-    static fn (array $repo): bool => ($repo['url'] ?? '') !== 'https://packages.xavier-tezza.fr',
+    static fn (array $repo): bool => !(($repo['type'] ?? '') === 'composer'
+        && in_array(rtrim($repo['url'] ?? '', '/'), ['https://packages.symsvel.com', 'https://packages.xavier-tezza.fr'], true)),
 ));
 $manifest['require']['symsvel-framework/core'] = 'dev-dev';
 $manifest['require-dev']['symsvel-framework/tooling'] = 'dev-dev';

@@ -41,3 +41,5 @@ Clôture : aucune anomalie bloquante non résolue, CI verte, CT indépendant val
 ## Première tranche d'adaptation (26/11/2026)
 
 Le CT initial a confirmé l'échec de `/bin/sh` et la limitation POSIX des ACL. CLI : lanceur CMD, recherche PATH native, Composer PHAR, nettoyage du Git upstream et cas local sous le compte CLI ; CI Windows bootstrap verte après correction de la détection Composer. Tooling PR #85 : venv Windows et vraie navigation MkDocs validés dans la première CI, résolution native Composer/npm et normalisation des clés de fichiers ajoutées ensuite (CI à confirmer). Restent notamment : nettoyage des composants, chemins et rollback transactionnels, Setup complet, gestion NTFS sous des comptes distincts, tests d'installation réelle et CT étudiant. Ne pas promouvoir le support Windows stable ni relancer le CT complet sur cette seule base.
+
+Le test de résolution native dev retire le dépôt Satis stable à son adresse actuelle (`packages.symsvel.com`) ainsi qu'à l'ancienne adresse. Il ne faut pas masquer l'audit Composer. La mise à jour du verrou Symfony vers les correctifs de sécurité 8.1 est un prérequis du CT.
