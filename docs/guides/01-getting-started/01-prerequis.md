@@ -2,6 +2,19 @@
 
 SymSvel s'installe sur votre poste de développement, sans Docker obligatoire.
 
+## Choisir votre système
+
+| Environnement | État |
+| --- | --- |
+| macOS | Parcours validé |
+| Linux | Parcours validé |
+| Windows natif | Compatibilité en préparation : [préparer votre poste Windows](01a-windows.md) |
+| Windows avec WSL2 | Parcours Linux envisageable, non encore validé sous WSL2 |
+
+Windows natif est la cible ; WSL2 et Docker ne seront pas des prérequis pour ce parcours. Ne confondez pas la disponibilité des outils Windows et la validation de SymSvel.
+
+## Outils nécessaires
+
 | Outil | Minimum / rôle |
 | --- | --- |
 | PHP CLI et serveur HTTP | PHP 8.4+, extensions requises par Composer, PDO et pilote de votre SGBD |

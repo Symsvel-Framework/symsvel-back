@@ -1,6 +1,6 @@
 # 3. Créer un projet
 
-Créez un dossier vide, puis lancez la CLI :
+Créez un dossier vide, puis lancez la CLI depuis votre terminal. Ce parcours suppose une CLI fonctionnelle ; si vous utilisez Windows, consultez son [état de compatibilité](01a-windows.md) avant de commencer :
 
 ~~~bash
 mkdir catalogue
