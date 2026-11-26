@@ -1,6 +1,6 @@
 # SymSvel Backend
 
-> Guides d'utilisation : [Getting Started](docs/guides/01-getting-started/01-prerequis.md). Les anciens documents techniques, ADR et comptes rendus restent sur GitHub ; seuls les guides sous `docs/guides/` sont destinés au nouveau site développeur.
+> Guides d'utilisation : [Prise en main](docs/guides/01-getting-started/01-prerequis.md). Les anciens documents techniques, ADR et comptes rendus restent sur GitHub ; seuls les guides sous `docs/guides/` sont destinés au nouveau site développeur.
 
 > [!IMPORTANT]
 > **Vous souhaitez utiliser SymSvel ? Rendez-vous sur [SymSvel CLI](https://github.com/Symsvel-Framework/symsvel-cli).** Ce dépôt est un **composant du framework**, pas un point d'installation autonome. Création de projets, installation des modules et mises à jour passent par la CLI. Les éventuelles commandes Composer, npm ou Symfony décrites ci-dessous concernent le travail des mainteneurs, sauf indication explicite contraire.
