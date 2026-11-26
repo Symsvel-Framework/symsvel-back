@@ -108,7 +108,7 @@
             "allow-contrib": true,
             "require": "8.1.*",
             "endpoint": [
-                "https://recipes.xavier-tezza.fr/index.json",
+                "https://recipes.symsvel.com/index.json",
                 "flex://defaults"
             ]
         }
@@ -126,7 +126,7 @@
     "repositories": [
         {
             "type": "composer",
-            "url": "https://packages.xavier-tezza.fr"
+            "url": "https://packages.symsvel.com"
         },
         {
             "type": "vcs",
