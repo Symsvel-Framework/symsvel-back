@@ -88,7 +88,7 @@ symsvel.cmd doctor
 
 Si le dépôt CLI est déjà présent, placez-vous dans ce dépôt et utilisez `git switch dev`, puis `git pull --ff-only`. Ajoutez le dossier `bin` au PATH utilisateur pour rendre le lanceur accessible après réouverture du terminal. Utilisez Composer-Setup (composer.phar), Node.js/npm et Python installés normalement, sans modifier la politique d'exécution PowerShell.
 
-Le Setup intégré utilise le compte qui exécute la CLI ; aucune ACL NTFS n'est modifiée dans ce cas. Un serveur HTTP sous un compte distinct exige encore une configuration de droits spécifique, sans transposer chmod/setfacl. Le build documentaire Windows utilise désormais `Scripts/python.exe` dans la PR Tooling #85, dont l'intégration et le parcours complet restent à qualifier.
+Le Setup intégré utilise le compte qui exécute la CLI ; aucune ACL NTFS n'est modifiée dans ce cas. Pour un serveur HTTP sous un compte utilisateur Windows distinct, la commande `symsvel.cmd permissions:fix --http-user='MACHINE\utilisateur'` est en qualification : elle limite les ACL NTFS aux dossiers `var/cache` et `var/log`. Ne transposez pas chmod/setfacl ; les droits SQLite restent à configurer séparément si nécessaire. Le build documentaire Windows utilise désormais `Scripts/python.exe` ; la PR Tooling #85 est intégrée sur `dev` après passage de ses tests Windows. Le parcours complet reste en qualification.
 
 Ne lancez pas encore la création d'un projet métier : les transactions, les interfaces et le Setup complet doivent passer leurs tests Windows. L'objectif reste de conserver les mêmes commandes SymSvel sur les trois systèmes, sans retoucher les sources installées.
 
