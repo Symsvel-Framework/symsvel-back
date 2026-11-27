@@ -19,6 +19,9 @@ final class BoBrowserCorsConfigurationTest extends TestCase
         self::assertSame(['POST', 'OPTIONS'], $cors['paths']['^/apibo/auth/browser(?:/|$)']['allow_methods']);
         self::assertNull($cors['paths']['^/api(?:/|$)']);
         self::assertNull($cors['paths']['^/apibo(?:/|$)']);
+        self::assertArrayHasKey('^/apiopen(?:/|$)', $cors['paths']);
+        self::assertNull($cors['paths']['^/apiopen(?:/|$)']);
+        self::assertSame(['^/apibo/auth/browser(?:/|$)'], array_keys(array_filter($cors['paths'], static fn ($path) => ($path['allow_credentials'] ?? false) === true)));
         self::assertSame('^/apibo/auth/browser(?:/|$)', array_key_first($cors['paths']) === '^/api(?:/|$)'
             ? array_keys($cors['paths'])[1] : '');
     }
