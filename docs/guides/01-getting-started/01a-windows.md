@@ -2,7 +2,7 @@
 
 ## État du support
 
-Windows natif est une cible de SymSvel, sans WSL2 ni Docker obligatoires. **Ce parcours est en préparation : l'installation complète n'est pas encore validée.** Vous pouvez dès maintenant préparer les outils ci-dessous. Ne lancez pas un projet métier tant que la CLI et le parcours de création natifs ne sont pas déclarés compatibles.
+Windows natif est une cible de SymSvel, sans WSL2 ni Docker obligatoires. **L'installation initiale sur le canal `dev` avec SQLite a passé le crash-test automatisé Windows le 26 novembre 2026.** La CI a validé la création du projet, les dix modules natifs, les deux phases du Setup HTTP, les migrations, le premier administrateur, les builds BO/App/Front, MkDocs et le healthcheck. Le CT indépendant sur Windows 11, le serveur HTTP permanent, les connexions aux interfaces et les autres SGBD restent à qualifier avant toute publication stable. Ce guide permet de participer aux essais sur un projet jetable.
 
 Ce guide cible Windows 11 64 bits maintenu. Les autres versions et architectures ne sont pas encore qualifiées. Utilisez PowerShell ou l'invite de commandes Windows ; les exemples ci-dessous utilisent PowerShell. Il n'est pas nécessaire de désactiver les protections de Windows ni d'exécuter le projet en administrateur.
 
@@ -74,25 +74,51 @@ Le serveur HTTP devra servir les dossiers suivants, après création du projet :
 
 Les adresses doivent résoudre vers la machine locale et correspondre exactement aux origines renseignées dans le wizard (schéma, hôte et port). Préparez vos hôtes virtuels selon la documentation de votre serveur. Les routes applicatives devront être testées lors de la qualification du serveur choisi. Ne rendez jamais accessibles la racine du projet, les secrets, vendor ou les bases SQLite.
 
-Pour la base, choisissez un fichier à l'intérieur du backend, hors de public. Si vous utilisez un autre SGBD, préparez son service et un compte autorisé à créer la base du projet. Les réglages des droits HTTP Windows devront être validés dans le chantier natif : ne transposez pas les commandes chmod ou setfacl de Linux.
+Pour la base, choisissez un fichier à l'intérieur du backend, hors de public. Si vous utilisez un autre SGBD, préparez son service et un compte autorisé à créer la base du projet. Les ACL NTFS du cache et des logs peuvent être configurées avec la CLI dev (voir ci-dessous). Les droits de la base SQLite et l'accès HTTP sous un compte distinct restent à vérifier sur votre poste ; ne transposez pas les commandes chmod ou setfacl de Linux.
 
-## 3. Installer la CLI : première qualification native sur dev
+## 3. Installer ou mettre à jour la CLI (branche dev)
 
-Les commandes d'installation macOS/Linux ne sont pas des commandes PowerShell. Le lanceur Windows `symsvel.cmd` est disponible sur la branche `dev` de la CLI. Le contrôle des prérequis et les primitives de bootstrap ont passé la première CI Windows native ; cela ne valide pas encore une création complète.
+Les commandes d'installation macOS/Linux ne sont pas des commandes PowerShell. Installez la CLI officielle depuis `dev`, en dehors de vos projets. Le lanceur natif `symsvel.cmd` est fourni dans `bin` ; avec ce dossier dans le PATH et `.CMD` dans PATHEXT, utilisez `symsvel` comme sur les autres systèmes. Si la résolution du nom ne fonctionne pas, vérifiez `Get-Command symsvel` et utilisez `symsvel.cmd` explicitement.
 
 ~~~powershell
 git clone --branch dev https://github.com/Symsvel-Framework/symsvel-cli.git "$HOME\symsvel-cli"
 $env:Path = "$HOME\symsvel-cli\bin;$env:Path"
-symsvel.cmd doctor
+symsvel doctor
 ~~~
 
-Si le dépôt CLI est déjà présent, placez-vous dans ce dépôt et utilisez `git switch dev`, puis `git pull --ff-only`. Ajoutez le dossier `bin` au PATH utilisateur pour rendre le lanceur accessible après réouverture du terminal. Utilisez Composer-Setup (composer.phar), Node.js/npm et Python installés normalement, sans modifier la politique d'exécution PowerShell.
+### CLI déjà installée
 
-Le Setup intégré utilise le compte qui exécute la CLI ; aucune ACL NTFS n'est modifiée dans ce cas. Pour un serveur HTTP sous un compte utilisateur Windows distinct, la commande `symsvel.cmd permissions:fix --http-user='MACHINE\utilisateur'` est en qualification : elle limite les ACL NTFS aux dossiers `var/cache` et `var/log`. Ne transposez pas chmod/setfacl ; les droits SQLite restent à configurer séparément si nécessaire. Le build documentaire Windows utilise désormais `Scripts/python.exe` ; la PR Tooling #85 est intégrée sur `dev` après passage de ses tests Windows. Le parcours complet reste en qualification.
+Ne clonez pas une seconde fois la CLI. Depuis son dossier (adaptez le chemin si nécessaire) :
 
-Ne lancez pas encore la création d'un projet métier : les transactions, les interfaces et le Setup complet doivent passer leurs tests Windows. L'objectif reste de conserver les mêmes commandes SymSvel sur les trois systèmes, sans retoucher les sources installées.
+~~~powershell
+cd "$HOME\symsvel-cli"
+git switch dev
+git pull --ff-only
+$env:Path = "$HOME\symsvel-cli\bin;$env:Path"
+symsvel doctor
+~~~
 
-Le [parcours de création](03-creer-un-projet.md) et le [Setup local](04-setup-local.md) restent les étapes communes après qualification.
+Si Git refuse la mise à jour en raison de modifications locales, conservez-les et résolvez le conflit avant de continuer. `symsvel update` met à jour un projet, pas la CLI elle-même.
+
+Ajoutez le dossier `bin` au PATH utilisateur pour rendre le lanceur accessible après réouverture du terminal. Utilisez Composer-Setup (composer.phar), Node.js/npm et Python installés normalement, sans modifier la politique d'exécution PowerShell.
+
+Le Setup intégré utilise le compte qui exécute la CLI ; aucune ACL NTFS n'est modifiée automatiquement dans ce cas. Pour un serveur HTTP sous un compte utilisateur Windows distinct et explicitement désigné, `symsvel permissions:fix --http-user='MACHINE\utilisateur'` accorde des droits Modify héritables aux deux comptes uniquement dans `backend/var/cache` et `backend/var/log`. La CI vérifie ces ACL, leur héritage et la préservation des droits SQLite ; l'accès HTTP effectif sous ce second compte reste à valider. Les droits de la base ne sont pas modifiés par la commande.
+
+## 4. Créer un projet de test
+
+Depuis un nouveau dossier vide, hors du dépôt de la CLI et de toute installation précédente :
+
+~~~powershell
+mkdir catalogue-ct
+cd catalogue-ct
+symsvel create-project --components=all --dev
+~~~
+
+Gardez le terminal ouvert et suivez le [Setup local](04-setup-local.md). Choisissez SQLite (par exemple `var/app.sqlite`) pour reproduire le parcours validé en CI, renseignez vos origines HTTP locales puis créez le premier administrateur. La finalisation génère les builds des interfaces. Configurez votre serveur HTTP permanent selon la section 2, puis vérifiez l'accès aux interfaces, la connexion et le healthcheck API. Ouvrez `dev-doc/site/index.html` pour consulter la documentation locale.
+
+Ne réutilisez pas un dossier issu d'un CT interrompu pour mesurer une installation vierge. Si une étape échoue, relevez la commande, le dernier résultat réussi et le message complet expurgé des secrets ; n'appliquez pas de modification manuelle des sources pour masquer l'erreur. Le support Windows stable n'est pas encore publié ; n'utilisez pas ce parcours de qualification pour un projet métier.
+
+Les [options de création](03-creer-un-projet.md) et les autres guides sont communs aux trois systèmes.
 
 ## Alternative facultative : WSL2
 

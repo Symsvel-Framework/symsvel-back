@@ -1,6 +1,6 @@
 # Intégration continue
 
-Depuis le 22/11/2026, la CI des dépôts publics SymSvel s'exécute sur **GitHub-hosted Ubuntu 24.04**, sans runner local. `.github/workflows/ci.yml` utilise PHP 8.4, Composer et PHPUnit ; déclencheurs : push sur `dev` et `main`, PR vers `dev` et `main`. `ci.yml.stub` est une archive inactive.
+Depuis le 22/11/2026, la CI des dépôts publics SymSvel s'exécute sur **GitHub-hosted Ubuntu 24.04 et Windows Server 2025**, sans runner local. `.github/workflows/ci.yml` utilise PHP 8.4, Composer et PHPUnit ; déclencheurs : push sur `dev` et `main`, PR vers `dev` et `main`. `ci.yml.stub` est une archive inactive.
 
 Les runners auto-hébergés du mainteneur restent réservés aux dépôts privés `symsvel-packages` et `symsvel-recipes`. Les validations CI ne remplacent pas les crash-tests locaux.
 
@@ -22,3 +22,5 @@ L'audit du lock a détecté neuf avis concernant `twig/twig` (CVE-2026-133763 à
 Le Back requiert Core `^1.2.1` et Tooling `^1.4`. Régénérer le lock par `composer update symsvel-framework/core symsvel-framework/tooling --with-dependencies --minimal-changes --no-scripts`, puis valider le manifeste et les audits complet et production. Le test `StandaloneSetupPhpCliTest` exige désormais le résolveur PHP CLI dans Tooling stable : une absence est un échec, pas un test ignoré. Le parcours de premier déploiement utilise encore `composer install` avec les dépendances de développement ; `--no-dev` n'est pas validé pour le Setup initial.
 
 `ComposerStableLockTest` vérifie explicitement les contraintes du manifeste (`^1.2.1`, `^1.4`), les versions stables minimales (Core 1.2.1, Tooling 1.4.0), le content-hash du lock et la cohérence des références source/dist. Lors d'une promotion, ces assertions doivent être actualisées avec le manifeste et le lock généré par Composer.
+
+Sur dev, le job `windows-installation` exécute la vraie création de projet avec la CLI dev, les deux phases du Setup HTTP en SQLite, les builds BO/App/Front, la documentation et le healthcheck. Le premier succès complet est le [run 45876116082](https://github.com/Symsvel-Framework/symsvel-back/actions/runs/45876116082). La CI ne remplace pas le CT indépendant sur Windows 11 ni la qualification des serveurs HTTP permanents et des autres moteurs SQL.
