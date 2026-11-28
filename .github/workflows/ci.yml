@@ -111,6 +111,10 @@ jobs:
     # exercises the joint dev-dev constraints of a real new project.
     if: github.ref == 'refs/heads/dev' || github.event.pull_request.head.ref == 'dev'
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [bo-only, all, tracking]
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
@@ -126,9 +130,9 @@ jobs:
           set -euo pipefail
           export COMPOSER_AUTH="$(php -r 'echo json_encode(["github-oauth" => ["github.com" => getenv("SYMSVEL_READ_TOKEN")]], JSON_THROW_ON_ERROR);')"
           target="$(mktemp -d)"
-          php tests/Fixtures/Composer/prepare-native-dev-resolution.php "$target"
+          php tests/Fixtures/Composer/prepare-native-dev-resolution.php "$target" --prepare "${{ matrix.variant }}"
           composer --working-dir="$target" update --no-install --no-scripts --no-plugins --no-interaction --no-progress --prefer-dist
-          php tests/Fixtures/Composer/prepare-native-dev-resolution.php "$target" --verify
+          php tests/Fixtures/Composer/prepare-native-dev-resolution.php "$target" --verify "${{ matrix.variant }}"
 
   # Installation smoke temporairement désactivé.
   # À réactiver lors du chantier modules / interfaces SvelteKit.

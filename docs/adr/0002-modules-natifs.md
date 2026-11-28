@@ -132,3 +132,7 @@ une autorisation de libre modification d'autres comptes.
 Les **alertes de configuration** appartiennent déjà au shell BO et à
 Settings. Elles suivent les déclarations `required` et `configured`
 des propriétaires, sans inventer un autre moteur d'onboarding.
+
+## GDPR natif et Tracking facultatif (28/11/2026)
+
+GDPR rejoint le manifeste natif obligatoire, BO seul compris, après Settings et Mails. Le mécanisme existant de Tooling protège les modules du manifeste contre la désinstallation. Users reste conditionné à App ; Tracking n'est déclaré dans aucune liste native et dépend de GDPR. Back et Core n'intègrent aucun code métier. La commande de traitement est dry-run par défaut, sans cron créé. Le catalogue Flex et le graphe Composer du canal dev doivent être validés avant CT. Aucune promotion stable avant les CT quatre SGBD et variantes, consentement réel et conservation.

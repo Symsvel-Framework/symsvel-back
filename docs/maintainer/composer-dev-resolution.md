@@ -7,3 +7,5 @@ La CI Back comporte un job native-dev-resolution : depuis les dépendances Back 
 ## Distribution officielle
 
 Catalogue stable : `https://packages.symsvel.com`. Catalogue de développement : `https://packages-dev.symsvel.com`. Recettes Flex : `https://recipes.symsvel.com/index.json`. La séparation des canaux et la résolution VCS de `--dev` restent inchangées. Les URL historiques ne sont plus prises en charge ; les chemins de déploiement restent inchangés. Les index distants et les CT dev/stable doivent être contrôlés avant clôture.
+
+La matrice de résolution native dev vérifie désormais BO seul (sans Users ni Tracking), tous les composants (Users mais pas Tracking) et tous les composants avec Tracking explicitement demandé. GDPR doit se résoudre en dev-dev dans les trois variantes. Les essais ne remplacent pas l'installation réelle Flex et les CT.

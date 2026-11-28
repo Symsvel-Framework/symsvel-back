@@ -14,6 +14,7 @@ Les modules natifs sont installés automatiquement par la CLI. Ils fournissent l
 | Countries | Référentiel des pays |
 | TwoFactor | Double authentification |
 | Users | Comptes utilisateurs (si App est installée) |
+| GDPR (canal dev, CT) | Consentements, confidentialité et traitement explicite des comptes inactifs |
 
 ## Ajouter un module facultatif
 
@@ -28,3 +29,5 @@ Remplacez NOM par le nom réel du package. Les modules obligatoires ne peuvent p
 Brevo et Google Login sont des modules facultatifs en préparation : ne les installez pas sur la seule base de leur nom. Attendez leur disponibilité dans votre canal et leur guide validé.
 
 Pour découvrir les modules disponibles avant leur installation, consultez les [dépôts officiels](https://github.com/orgs/Symsvel-Framework/repositories).
+
+Tracking est un module facultatif (canal dev, CT). Il propose GA4 et Meta Pixel sur App/Front, uniquement après consentement GDPR et sur les routes publiques auditées. Aucun suivi dans BO. Installer dans un projet dev avec `symsvel require symsvel-framework/module-tracking:dev-dev`. Compléter les informations légales via Languages et vérifier les SDK au CT. Aucune publication stable annoncée.

@@ -36,3 +36,5 @@ Si une opération échoue, lisez le diagnostic et conservez les checkpoints. Ne 
 Relancez vos tests métier, vérifiez les migrations, l'authentification, les pages et les e-mails. Examinez git diff dans chaque dépôt. Une fois les vérifications effectuées, publiez vos propres commits et déployez selon votre stratégie habituelle.
 
 Le canal du framework est indépendant de APP_ENV : passer une application en production ne change pas ses contraintes de packages.
+
+Pour les projets dev créés avant l'ajout de GDPR au manifeste natif, `symsvel update back` actualise le manifeste mais ne crée pas à lui seul une nouvelle exigence Composer. Après mise à jour des dépendances et des composants installés, ajouter explicitement `symsvel require symsvel-framework/module-gdpr:dev-dev` si le package est absent. Vérifier ensuite migrations, Settings et synchronisation des Sveltes. Les projets neufs obtiennent GDPR lors du bootstrap. Tracking reste facultatif.
