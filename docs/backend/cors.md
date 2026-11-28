@@ -1,6 +1,6 @@
 # CORS et origines du projet
 
-SymSvel utilise NelmioCorsBundle pour les endpoints `/api` et `/apibo`.
+SymSvel utilise NelmioCorsBundle pour les endpoints `/api`, `/apibo` et `/apiopen`.
 Le Back est la cible de ces appels, tandis que les interfaces BO, App
 et Front sont les origines navigateur à autoriser.
 
@@ -71,3 +71,7 @@ connexion/rotation/logout et les liens d'invitation App sur le domaine mappé.
 
 Les CI Back et Auth, puis les crash-tests Choralys en local et sur le VPS,
 sont nécessaires avant de déclarer le comportement validé.
+
+## API publiques (27/11/2026)
+
+Le préfixe `/apiopen` utilise les mêmes origines exactes publiées par Setup et les mêmes en-têtes/méthodes que `/api`, sans credentials ni wildcard. Cela permet notamment les appels statiques App/Front aux API publiques des modules. Les modules restent responsables de leurs contrôles d'accès et d'origine ; aucune règle métier GDPR n'est ajoutée au Back. Le seul chemin avec credentials reste le transport navigateur BO Auth. Test de configuration dédié ; CT preflight sur les origines réelles requis.

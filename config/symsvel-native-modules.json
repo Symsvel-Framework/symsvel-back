@@ -9,7 +9,8 @@
     "symsvel-framework/module-auth",
     "symsvel-framework/module-two-factor",
     "symsvel-framework/module-languages",
-    "symsvel-framework/module-countries"
+    "symsvel-framework/module-countries",
+    "symsvel-framework/module-gdpr"
   ],
   "components": {
     "app": [

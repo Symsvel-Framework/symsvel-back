@@ -1,0 +1,9 @@
+# Documentation : règles éditoriales
+
+Les guides destinés au développeur sont placés sous docs/guides/<section>/, les notes de maintenance, ADR, incidents et procédures de release restent dans les autres dossiers de documentation GitHub. Ne pas ajouter de journal daté à un guide ; mettre à jour l'instruction concernée. Les anciens documents sont conservés comme historique et ne sont pas une seconde procédure d'installation.
+
+Le parcours est validé par un développeur qui découvre SymSvel : installation CLI, création locale, code métier, module, mise à jour et production. Chaque guide décrit les fonctionnalités réellement supportées, avec commandes reproductibles. Les quatre captures Setup sont issues des vrais renderers de StandaloneSetup avec un workspace fictif, sans soumission de formulaire, base ni secrets. Le workflow Capture documentation Setup et la fixture tests/Fixtures/Documentation/render-setup.php permettent de régénérer les images à chaque évolution visuelle. Ce rendu n'est pas une validation fonctionnelle du déploiement ; les CT restent obligatoires. La prise en charge généralisée des vendors tiers et le premier déploiement entièrement manuel sans CD ne doivent pas être annoncés comme disponibles.
+
+Les intitulés de navigation et les titres éditoriaux du site développeur sont en français. Une future version anglaise fera l'objet d'un chantier distinct ; les chemins techniques des rubriques ne sont pas traduits.
+
+Pour tout nouvel environnement, distinguer préparation des prérequis, compatibilité de la CLI et installation complète qualifiée. Le guide Windows reste explicitement en préparation jusqu'au CT indépendant décrit dans [la procédure mainteneur](windows-qualification.md).

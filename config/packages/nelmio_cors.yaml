@@ -16,3 +16,4 @@ nelmio_cors:
             allow_credentials: true
             max_age: 600
         '^/apibo(?:/|$)': ~
+        '^/apiopen(?:/|$)': ~
